@@ -25,6 +25,7 @@ let initialValue = {
     boltDiameterList: [],
     thicknessList: [],
     propertyClassList: [],
+    angleList: [],
     sessionCreated: false,
     sendNextRequests: false,
     setTheCookie: false,
@@ -222,6 +223,20 @@ export const ModuleProvider = ({ children }) => {
         }
     }
 
+    const getCleatAngleList = async () => {
+        try {
+            const response = await fetch(`${BASE_URL}populate?moduleName=${state.currentModuleName}&angleList=Customized`, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'include'
+            });
+            const jsonResponse = await response?.json()
+            dispatch({ type: 'SET_CLEAT_ANGLE_LIST', payload: jsonResponse })
+        } catch (error) {
+            console.log('error : ', error)
+        }
+    }
+
     const createSession = async (module_id) => {
         try {
             const requestData = { 'module_id': module_id }
@@ -241,6 +256,10 @@ export const ModuleProvider = ({ children }) => {
                 // fetch the connectivityList 
                 if(module_id=="Fin Plate Connection"){
                     getConnectivityList('Fin-Plate-Connection')
+                }
+                else if (module_id=='Cleat-Angle-Connection'){
+                    getConnectivityList('Cleat-Angle-Connection')
+                    getCleatAngleList()
                 }
                 else{
                     getConnectivityList('End-Plate-Connection')

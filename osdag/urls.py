@@ -14,6 +14,7 @@ from osdag.web_api.jwt_api import JWTHomeView
 from osdag.web_api.google_sso_api import GoogleSSOView
 from . import views
 from osdag.web_api.endplate_outputView import EndPLateOutputData
+from osdag.web_api.cleatangle_outputView import CleatAngleOutputData
 # temporary
 app_name = 'osdag-web/'
 
@@ -83,5 +84,8 @@ urlpatterns = [
 
     path('calculate-output/End-Plate-Connection',
          EndPLateOutputData.as_view(), name='End-Plate-Connection'),
+    
+    path('calculate-output/Cleat-Angle-Connection',
+         CleatAngleOutputData.as_view(),name="Cleat-Angle-Connection")
 
 ]

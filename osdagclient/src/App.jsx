@@ -25,6 +25,7 @@ import LoginPage from './components/userAuth/LoginPage';
 // jwt imports 
 import jwt_decode from 'jwt-decode';
 import EndPlate from './components/shearConnection/EndPlate';
+import CleatAngle from './components/shearConnection/CleatAngle';
 
 let renderedOnce = false
 
@@ -60,6 +61,12 @@ function App() {
           path='/design/:designType/end_plate'
           element={
              <EndPlate /> 
+          }
+        />
+        <Route
+          path='/design/:designType/cleat_angle'
+          element={
+            <CleatAngle/>
           }
         />
       <Route path='/user' element={<UserAccount />} />

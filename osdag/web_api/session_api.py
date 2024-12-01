@@ -56,7 +56,14 @@ class CreateSession(APIView):
         elif request.COOKIES.get("fin_plate_connection_session") is not None:
                print('fin_plate_connection is there')
                return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
-    
+        elif request.COOKIES.get("cleat_angle_connection_session") is not None:
+               print('cleat_angle_connection_session is there')
+               return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
+        # elif request.COOKIES.get("cleat_angle_connection_session") is not None:
+        #     print("Deleting existing cleat_angle_connection_session cookie")
+        #     response = JsonResponse({"status": "deleted"}, status=200)
+        #     response.delete_cookie("cleat_angle_connection_session")
+        #     return response
         if module_id not in developed_modules: # Error Checking: Does module api exist
             print('module_id not developed')
             return JsonResponse("Error: This module has not been developed yet", status=501) # Return error response.
@@ -83,6 +90,9 @@ class CreateSession(APIView):
             elif (module_id=="End Plate Connection"):
                 response.set_cookie(key = "end_plate_connection_session", value = cookie_id , samesite = 'None' , secure = 'True')
                 print("cookie Set")
+            elif ( module_id == "Clear Angle Connection"):
+                response.set_cookie(key="cleat_angle_connection_session",value = cookie_id , samesite = 'None' , secure = 'True')
+                print("Cookie Set cleat")
             return response
         else : 
             print('serializer is invalid')
@@ -107,6 +117,8 @@ class DeleteSession(APIView):
            cookie_id = request.COOKIES.get("end_plate_connection_session") 
         elif(module_id=='Fin Plate Connection'):# Get design session id.
             cookie_id = request.COOKIES.get("fin_plate_connection_session") 
+        elif(module_id=='Cleat Angle Connection'):# Get design session id.
+            cookie_id = request.COOKIES.get("cleat_angle_connection_session") 
         if cookie_id == None or cookie_id == '': # Error Checking: If design session id provided.
             return HttpResponse("Error: Please open module", status=400) # Returns error response.
         if not Design.objects.filter(cookie_id=cookie_id).exists(): # Error Checking: If design session exists.
@@ -122,4 +134,6 @@ class DeleteSession(APIView):
           response.delete_cookie("end_plate_connection_session")
         elif (module_id=='Fin Plate Connection'):
           response.delete_cookie("fin_plate_connection_session")
+        elif (module_id=='Cleat Angle Connection'):
+            response.delete_cookie('cleat_angle_connection')
         return response

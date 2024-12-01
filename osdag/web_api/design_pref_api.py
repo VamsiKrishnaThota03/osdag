@@ -16,6 +16,7 @@ class DesignPreference(APIView):
         connectivity = request.GET.get("connectivity")
         material = request.GET.get("material")
         cookie_id = request.COOKIES.get('fin_plate_connection_session')
+        # cookie_id = request.COOKIES.get('connection_session')
 
         """
         if cookie_id == None or cookie_id == '': 
@@ -46,6 +47,7 @@ class MaterialDetails(APIView):
         email = request.GET.get("email")
         material = request.GET.get("material")
         cookie_id = request.COOKIES.get('fin_plate_connection_session')
+        # cookie_id = request.COOKIES.get('connection_session')
 
         if cookie_id == None or cookie_id == '': 
             return Response("Error: Please open module", status=status.HTTP_400_BAD_REQUEST) 
@@ -69,6 +71,7 @@ class MaterialDetails(APIView):
         fy_40 = request.data.get("fy_40")
         fu = request.data.get("fu")
         cookie_id = request.COOKIES.get('fin_plate_connection_session')
+        # cookie_id = request.COOKIES.get('connection_session')
 
         if cookie_id == None or cookie_id == '': 
             return Response("Error: Please open module", status=status.HTTP_400_BAD_REQUEST) 

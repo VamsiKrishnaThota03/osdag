@@ -297,6 +297,7 @@ function DropdownMenu({ label, dropdown, setDesignPrefModalStatus, inputs, allSe
         break;
 
       case `FinePlate`: console.log(`FinePlate val ${option.name}`);
+        break;
       // Graphics End
 
       case `Downloads`: console.log(`Downloads val ${option.name}`);

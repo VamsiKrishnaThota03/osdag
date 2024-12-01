@@ -65,10 +65,16 @@ export default (state, action) => {
                 thicknessList : action.payload.thicknessList
             }
         
-        case 'SET_PROPERTY_CLASS_LIST' : 
+            case 'SET_PROPERTY_CLASS_LIST' : 
             return{
                 ...state,
                 propertyClassList : action.payload.propertyClassList
+            }
+        case 'SET_CLEAT_ANGLE_LIST' : 
+            console.log("XDXD", action.payload)
+            return{
+                ...state,
+                angleList : action.payload.angleList
             }
         case 'SET_DESIGN_DATA_AND_LOGS' :   
             return{
