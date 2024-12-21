@@ -65,7 +65,7 @@ export default (state, action) => {
                 thicknessList : action.payload.thicknessList
             }
         
-            case 'SET_PROPERTY_CLASS_LIST' : 
+        case 'SET_PROPERTY_CLASS_LIST' : 
             return{
                 ...state,
                 propertyClassList : action.payload.propertyClassList

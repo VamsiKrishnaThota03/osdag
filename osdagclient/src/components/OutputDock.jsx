@@ -4,6 +4,82 @@ import { Input, Modal } from 'antd';
 import spacingIMG from '../assets/spacing_3.png'
 import capacityIMG1 from '../assets/L_shear1.png'
 import capacityIMG2 from '../assets/L.png'
+// const placeholderOutput = {
+// 	const placeholderoutputcleat = {
+// 		Cleat: [
+// 		  {
+// 			label: "Cleat Angle Designation",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Shear Yielding Capacity (kN)",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Block Shear Capacity (kN)",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Moment Demand(kNm)",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Moment Capacity(kNm)",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Bolt Columns (nos)",
+// 			val: 0
+// 		  },
+// 			{
+// 			label: "Bolt Rows (nos)", 
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Bolt Force (kN)",
+// 			val: 0
+// 		  },
+// 			{
+// 			label: "Capacity",
+// 			val:0
+// 			}
+// 		],
+// 		Bolt: [
+// 		  {
+// 			label: "Gauge Distance 1 (mm)",
+// 			val: 0
+// 		  },
+// 			{
+// 			label: "Diameter (mm)",
+// 			val: 0
+// 		  },
+// 			{
+// 			label: "Property Class",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Bolt Columns (nos)",
+// 			val: 0
+// 		  },
+// 			{
+// 			label: "Bolt Rows (nos)", 
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Bolt Force (kN)",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Bolt Value  (kN)",
+// 			val: 0
+// 		  },
+// 		  {
+// 			label: "Bolt Value  (kN)",
+// 			val: 0
+// 		  }
+// 		]
+// 	}
+	
 const placeholderOutput = {
 	Bolt: [
 		{

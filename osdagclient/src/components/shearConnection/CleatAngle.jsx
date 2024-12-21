@@ -37,6 +37,7 @@ const conn_map = {
 };
 
 function CleatAngle() {
+  console.log('Cleat Angle component is opening');
   const { MenuItems } = menuData;
 
   const [selectedOption, setSelectedOption] = useState(

@@ -46,24 +46,21 @@ class CreateSession(APIView):
     def post(self,request) :
         module_id = request.data.get('module_id')
         print('module_id in session : ' , module_id)
-
         if module_id == None or module_id == '': # Error Checking: If module id provided.
             print('module is None or Empty')
             return JsonResponse("Error: Please specify module id", status=400) # Returns error response.
         if request.COOKIES.get("end_plate_connection_session") is not None: # Error Checking: Already editing design.
             print('end_plate_connection is there')
             return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
-        elif request.COOKIES.get("fin_plate_connection_session") is not None:
-               print('fin_plate_connection is there')
-               return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
+        # elif request.COOKIES.get("fin_plate_connection_session") is not None:
+        #        print('fin_plate_connection is there')
+        #        return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
         elif request.COOKIES.get("cleat_angle_connection_session") is not None:
                print('cleat_angle_connection_session is there')
                return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
-        # elif request.COOKIES.get("cleat_angle_connection_session") is not None:
-        #     print("Deleting existing cleat_angle_connection_session cookie")
-        #     response = JsonResponse({"status": "deleted"}, status=200)
-        #     response.delete_cookie("cleat_angle_connection_session")
-        #     return response
+        elif request.COOKIES.get("seated_angle_connection") is not None:
+            print("seated angle connection is there ")
+            return JsonResponse({"status" : "set"}, status=200)
         if module_id not in developed_modules: # Error Checking: Does module api exist
             print('module_id not developed')
             return JsonResponse("Error: This module has not been developed yet", status=501) # Return error response.
@@ -90,9 +87,11 @@ class CreateSession(APIView):
             elif (module_id=="End Plate Connection"):
                 response.set_cookie(key = "end_plate_connection_session", value = cookie_id , samesite = 'None' , secure = 'True')
                 print("cookie Set")
-            elif ( module_id == "Clear Angle Connection"):
+            elif ( module_id == "Cleat Angle Connection"):
                 response.set_cookie(key="cleat_angle_connection_session",value = cookie_id , samesite = 'None' , secure = 'True')
                 print("Cookie Set cleat")
+            elif (module_id == "Seated Angle Connection"):
+                response.set_cookie(key="Seated Angle Connection",value=cookie_id,samesite= 'None', secure='True')
             return response
         else : 
             print('serializer is invalid')
@@ -118,7 +117,9 @@ class DeleteSession(APIView):
         elif(module_id=='Fin Plate Connection'):# Get design session id.
             cookie_id = request.COOKIES.get("fin_plate_connection_session") 
         elif(module_id=='Cleat Angle Connection'):# Get design session id.
-            cookie_id = request.COOKIES.get("cleat_angle_connection_session") 
+            cookie_id = request.COOKIES.get("cleat_angle_connection_session")
+        elif(module_id=='Seated Angle Connection'):
+            cookie_id=request.COOKIES.get("seated_angle_connection") 
         if cookie_id == None or cookie_id == '': # Error Checking: If design session id provided.
             return HttpResponse("Error: Please open module", status=400) # Returns error response.
         if not Design.objects.filter(cookie_id=cookie_id).exists(): # Error Checking: If design session exists.
@@ -130,10 +131,4 @@ class DeleteSession(APIView):
             return HttpResponse("Inernal Server Error: " + repr(e), status=500) # Return error response.
         response = HttpResponse(status=200) # Status code 200 - Successfully deleted .
 
-        if(module_id=='End Plate Connection'):
-          response.delete_cookie("end_plate_connection_session")
-        elif (module_id=='Fin Plate Connection'):
-          response.delete_cookie("fin_plate_connection_session")
-        elif (module_id=='Cleat Angle Connection'):
-            response.delete_cookie('cleat_angle_connection')
         return response

@@ -264,9 +264,6 @@ export const ModuleProvider = ({ children }) => {
                 else{
                     getConnectivityList('End-Plate-Connection')
                 }
-
-
-               
                 getColumnBeamMaterialList(state.currentModuleName, 'Column-Flange-Beam-Web')
                 getBoltDiameterList()
                 getThicknessList()

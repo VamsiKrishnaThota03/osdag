@@ -9,11 +9,12 @@ from osdag.models import Design
 
 from .inputdata.fin_plate_input import FinPlateInputData
 from .inputdata.cleat_angle_input import CleatAngleInputData
+from .inputdata.end_plate_input import EndPlateInputData
 
 INPUT_DATA_FACTORY = {
     'Fin-Plate-Connection': FinPlateInputData(),
     'Cleat-Angle-Connection': CleatAngleInputData(),
-    'End-Plate-Connection':FinPlateInputData(),
+    'End-Plate-Connection':EndPlateInputData(),
 }
 
 
@@ -52,11 +53,32 @@ class InputData(APIView):
         propertyClass = request.GET.get("propertyClass")
         thickness = request.GET.get('thickness')
         angleList = request.GET.get('angleList')
-        if(moduleName=='Fin-Plate-Connection'):
-          cookie_id = request.COOKIES.get('fin_plate_connection_session')
+        cookie_id = None
+        
+        if moduleName is not None:
+            print(moduleName)
         else:
+            print("module not found")
+        print(moduleName)
+        
+        # cookie_id = request.COOKIES.get('fin_plate_connection_session')
+        
+        if(moduleName=='Fin-Plate-Connection'):
+            cookie_id = request.COOKIES.get('fin_plate_connection_session')
+            print('cookie_id inside input data: ' , cookie_id)
+
+        elif(moduleName=='Cleat-Angle-Connection'):
+            cookie_id=request.COOKIES.get('cleat_angle_connection_session')
+            print('cookie_id inside input data: ' , cookie_id)
+            
+        elif(moduleName=='End-Plate-Connection'):
             cookie_id = request.COOKIES.get('end_plate_connection_session')
-        print('cookie_id inside input data: ' , cookie_id)
+            print('cookie_id inside end plate input data: ' , cookie_id)
+            
+        elif(moduleName=="Seated-Angle-Connection"):
+            cookie_id = request.COOKIES.get('seated_angle_connection_session')
+            print('cookie id in seated angle connection input data ', cookie_id)
+
         if cookie_id == None or cookie_id == '': # Error Checking: If design session id provided.
             return Response("Error: Please open module", status=status.HTTP_400_BAD_REQUEST) # Returns error response.
         if not Design.objects.filter(cookie_id=cookie_id).exists(): # Error Checking: If design session exists.
