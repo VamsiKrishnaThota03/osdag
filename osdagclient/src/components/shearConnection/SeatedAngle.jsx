@@ -71,7 +71,7 @@ const MenuItems = [
       { name: "Model" },
       { name: "Beam" },
       { name: "Column" },
-      { name: "FinePlate" },
+      { name: "Seated Angle" },
       { name: "Change Background" }
     ]
   },
@@ -121,7 +121,7 @@ function SeatedAngle() {
     bolt_type: "Bearing Bolt",
     connector_material: "E 250 (Fe 410 W)A",
     load_shear: "70",
-    module: "Fin Plate Connection",
+    module: "Seated Angle Connection",
     plate_thickness: [],
     beam_section: "MB 300",
     column_section: "HB 150",
@@ -154,14 +154,14 @@ function SeatedAngle() {
  
   useEffect(() => {
     
-    createSession('Fin Plate Connection')
+    createSession('Seated Angle Connection')
    
   }, [])
 
   useEffect(() => {
     return () => {
-     if(location.pathname!="/design/connections/fin_plate"){
-              deleteSession('Fin Plate Connection');
+     if(location.pathname!="/design/connections/seated_angle"){
+              deleteSession('Seated Angle Connection');
     }
     };
 
@@ -249,9 +249,6 @@ function SeatedAngle() {
     setSelectedOption(value);
   };
 
-
-  ;
-
   useEffect(() => {
     if (displayOutput) {
       try {
@@ -318,7 +315,7 @@ function SeatedAngle() {
         "Member.Supported_Section.Material": inputs.supported_material,
         "Member.Supporting_Section.Designation": inputs.column_section,
         "Member.Supporting_Section.Material": inputs.supporting_material,
-        "Module": "Fin Plate Connection",
+        "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
         "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness
@@ -348,13 +345,13 @@ function SeatedAngle() {
         "Member.Supported_Section.Material": inputs.supported_material,
         "Member.Supporting_Section.Designation": inputs.primary_beam,
         "Member.Supporting_Section.Material": inputs.supporting_material,
-        "Module": "Fin Plate Connection",
+        "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
         "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness
       }
     }
-    createDesign(param,"Fin-Plate-Connection")
+    createDesign(param,"Seated-Angle-Connection")
     setDisplayOutput(true)
   }
   // Create design report ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -508,7 +505,7 @@ function SeatedAngle() {
         "Member.Supported_Section.Material": inputs.supported_material,
         "Member.Supporting_Section.Designation": inputs.column_section,
         "Member.Supporting_Section.Material": inputs.supporting_material,
-        "Module": "Fin Plate Connection",
+        "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
         "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness
@@ -538,7 +535,7 @@ function SeatedAngle() {
         "Member.Supported_Section.Material": inputs.supported_material,
         "Member.Supporting_Section.Designation": inputs.primary_beam,
         "Member.Supporting_Section.Material": inputs.supporting_material,
-        "Module": "Fin Plate Connection",
+        "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
         "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness,
@@ -584,7 +581,7 @@ function SeatedAngle() {
         bolt_type: "Bearing Bolt",
         connector_material: inputs.connector_material,
         load_shear: "",
-        module: "Fin Plate Connection",
+        module: "Seated Angle Connection",
         plate_thickness: inputs.plate_thickness,
         beam_section: "Select Section",
         column_section: "Select Section",
@@ -597,7 +594,7 @@ function SeatedAngle() {
         bolt_type: "Bearing Bolt",
         connector_material: inputs.connector_material,
         load_shear: "",
-        module: "Fin Plate Connection",
+        module: "Seated Angle Connection",
         plate_thickness: inputs.plate_thickness,
         primary_beam: "JB 200",
         secondary_beam: "JB 150",

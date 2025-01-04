@@ -10,11 +10,13 @@ from osdag.models import Design
 from .inputdata.fin_plate_input import FinPlateInputData
 from .inputdata.cleat_angle_input import CleatAngleInputData
 from .inputdata.end_plate_input import EndPlateInputData
+from .inputdata.seated_angle_input import SeatedAngleInputData
 
 INPUT_DATA_FACTORY = {
     'Fin-Plate-Connection': FinPlateInputData(),
     'Cleat-Angle-Connection': CleatAngleInputData(),
     'End-Plate-Connection':EndPlateInputData(),
+    'Seated-Angle-Connection':SeatedAngleInputData(),
 }
 
 
