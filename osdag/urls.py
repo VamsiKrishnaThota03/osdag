@@ -87,5 +87,8 @@ urlpatterns = [
     
     path('calculate-output/Cleat-Angle-Connection',
          CleatAngleOutputData.as_view(),name="Cleat-Angle-Connection")
+    
+#     path('calculate-output/Seated-Angle-Connection',
+#          SeatedAngleOutputData.as_view(),name="Seated-Angle-Connection")
 
 ]

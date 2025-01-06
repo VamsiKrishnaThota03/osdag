@@ -850,7 +850,7 @@ function FinePlate() {
                   onSelect={handleSelectChange}
                   value={selectedOption}
                 >
-                  {connectivityList.map((item, index) => (
+                  {(connectivityList || []).map((item, index) => (
                     <Option key={index} value={item}>{item}</Option>
                   ))}
                 </Select>
@@ -909,7 +909,7 @@ function FinePlate() {
                         onSelect={(value) => setInputs({ ...inputs, column_section: value })}
                       >
                         {
-                          columnList.map((item, index) => (
+                          (columnList || []).map((item, index) => (
                             <Option key={index} value={item}>
                               {item}
                             </Option>

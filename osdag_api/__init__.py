@@ -1,7 +1,7 @@
 from osdag_api.module_finder import *
 
 developed_modules = [
-    "Fin Plate Connection","End Plate Connection"
+    "Fin Plate Connection","End Plate Connection","Cleat Angle Connection"
 ]
 module_dict = [
     {
@@ -15,5 +15,17 @@ module_dict = [
         "image": "/static/images/modules/end_plate_connection.png",
         "name": "End Plate",
         "path": "Connection/Shear Connection"
+    },
+    {
+        "key": "Cleat Angle Connection",
+        "image":"/static/images/modules/cleat_angle_connection.png",
+        "name":"Cleat Angle",
+        "path":"Connection/Shear Connection"
+    },
+    {
+        "key":"Seated Angle Connection",
+        "image":"/static/images/modules/seated_angle_connection.png",
+        "name":"Seated Angle",
+        "path":"Connection/Shear Connection"
     }
 ]

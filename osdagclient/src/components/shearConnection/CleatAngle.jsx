@@ -72,6 +72,7 @@ function CleatAngle() {
     createDesign,
     createDesignReport,
     getDesingPrefData,
+    deleteSession
   } = useContext(ModuleContext);
   const [angleModal, setAngleModal] = useState(false);
 
@@ -114,7 +115,16 @@ function CleatAngle() {
   const [renderBoolean, setRenderBoolean] = useState(false);
 
   useEffect(() => {
-    createSession(inputs.module);
+    createSession("Cleat Angle Connection");
+  }, []);
+
+  useEffect(() => {
+    return () => {
+     if(location.pathname!="/design/connections/cleat_angle"){
+              deleteSession('Cleat Angle Connection');
+    }
+    };
+
   }, []);
 
   const handleSelectChangePropertyClass = (value) => {
@@ -314,7 +324,7 @@ function CleatAngle() {
           : inputs.angle_list,
       };
     }
-    createDesign(param, "cleat_angle");
+    createDesign(param, "Cleat-Angle-Connection");
     setDisplayOutput(true);
   };
   // Create design report ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

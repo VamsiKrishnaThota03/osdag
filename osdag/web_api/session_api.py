@@ -52,9 +52,9 @@ class CreateSession(APIView):
         if request.COOKIES.get("end_plate_connection_session") is not None: # Error Checking: Already editing design.
             print('end_plate_connection is there')
             return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
-        # elif request.COOKIES.get("fin_plate_connection_session") is not None:
-        #        print('fin_plate_connection is there')
-        #        return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
+        elif request.COOKIES.get("fin_plate_connection_session") is not None:
+               print('fin_plate_connection is there')
+               return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
         elif request.COOKIES.get("cleat_angle_connection_session") is not None:
                print('cleat_angle_connection_session is there')
                return JsonResponse({"status" : "set"}, status=200) # Returns error response. 
@@ -92,6 +92,7 @@ class CreateSession(APIView):
                 print("Cookie Set cleat")
             elif (module_id == "Seated Angle Connection"):
                 response.set_cookie(key="Seated Angle Connection",value=cookie_id,samesite= 'None', secure='True')
+                print("Cookie set Seated")
             return response
         else : 
             print('serializer is invalid')

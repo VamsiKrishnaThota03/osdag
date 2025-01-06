@@ -1,4 +1,4 @@
-from osdag_api.modules import fin_plate_connection,end_plate_connection
+from osdag_api.modules import fin_plate_connection,end_plate_connection,cleat_angle_connection,seated_angle_connection
 from types import ModuleType
 import typing
 from typing import Dict, Any, List, _Protocol
@@ -32,7 +32,9 @@ class ModuleApiType(_Protocol):
         pass
 module_dict : Dict[str, ModuleApiType] = {
     'Fin Plate Connection': fin_plate_connection,
-    'End Plate Connection':end_plate_connection
+    'End Plate Connection':end_plate_connection,
+    'Cleat Angle Connection':cleat_angle_connection,
+    'Seated Angle Connection':seated_angle_connection
 } 
 def get_module_api(module_id: str) -> ModuleApiType:
     """Return the api for the specified module"""
