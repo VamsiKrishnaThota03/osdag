@@ -257,13 +257,17 @@ export const ModuleProvider = ({ children }) => {
                 if(module_id=="Fin Plate Connection"){
                     getConnectivityList('Fin-Plate-Connection')
                 }
-                else if (module_id=='Cleat-Angle-Connection'){
+                else if (module_id=='Cleat Angle Connection'){
                     getConnectivityList('Cleat-Angle-Connection')
                     getCleatAngleList()
                 }
-                else{
+                else if (module_id=='End Plate Connection'){
                     getConnectivityList('End-Plate-Connection')
                 }
+                else{
+                    getConnectivityList('Seated-Angle-Connection')
+                }
+
                 getColumnBeamMaterialList(state.currentModuleName, 'Column-Flange-Beam-Web')
                 getBoltDiameterList()
                 getThicknessList()
@@ -362,7 +366,7 @@ export const ModuleProvider = ({ children }) => {
             }else if(response.status == 400){
                 console.log('BAD input values')
 
-                // set teh render CAD to false to display the default image only 
+                // set the render CAD to false to display the default image only 
                 dispatch({ type: 'SET_RENDER_CAD_MODEL_BOOLEAN', payload: false })
             }
 
