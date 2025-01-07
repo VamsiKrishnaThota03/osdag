@@ -62,12 +62,12 @@ class CleatAngleOutputData(APIView):
         print("Inside post method of OutputData")
 
         # obtaining the session, module_id, input_values
-        cookie_id = request.COOKIES.get('end_plate_connection_session')
-        module_api = get_module_api('End Plate Connection')
+        cookie_id = request.COOKIES.get('cleat_angle_connection_session')
+        module_api = get_module_api('Cleat Angle Connection')
         input_values = request.data
         tempData = {
             'cookie_id': cookie_id,
-            'module_id': 'End Plate Connection',
+            'module_id': 'Cleat Angle Connection',
             'input_values': input_values
         }
         print('tempData : ', tempData)

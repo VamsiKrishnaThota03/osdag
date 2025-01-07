@@ -225,7 +225,7 @@ export const ModuleProvider = ({ children }) => {
 
     const getCleatAngleList = async () => {
         try {
-            const response = await fetch(`${BASE_URL}populate?moduleName=${state.currentModuleName}&angleList=Customized`, {
+            const response = await fetch(`${BASE_URL}populate?moduleName=Cleat-Angle-Connection&angleList=Customized`, {
                 method: 'GET',
                 mode: 'cors',
                 credentials: 'include'
@@ -562,6 +562,7 @@ export const ModuleProvider = ({ children }) => {
             boltDiameterList: state.boltDiameterList,
             thicknessList: state.thicknessList,
             propertyClassList: state.propertyClassList,
+            angleList: state.angleList,
             sessionCreated: state.sessionCreated,
             sendNextRequests: state.sendNextRequests,
             setTheCookie: state.setTheCookie,
