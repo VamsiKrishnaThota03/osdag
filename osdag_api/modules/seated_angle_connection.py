@@ -5,7 +5,7 @@ import osdag_api.modules.shear_connection_common as scc
 from OCC.Core import BRepTools
 from cad.common_logic import CommonDesignLogic
 # Will log a lot of unnessecary data.
-from design_type.connection.cleat_angle_connection import CleatAngleConnection
+from design_type.connection.seated_angle_connection import SeatedAngleConnection
 import sys
 import os
 import typing
@@ -44,14 +44,14 @@ def get_required_keys_seated_angle() -> List[str]:
 
 def validate_input(input_values: Dict[str,Any])-> None:
     #check iif all required keys exist 
-    required_keys = get_required_keys_cleat_angle()
+    required_keys = get_required_keys_seated_angle()
     # check if input_values contains all required keys
     missing_keys = contains_keys(input_values, required_keys)
     if missing_keys != None: #if keys are missing.
         #Raise error for the first missinf key.
         raise MissingKeyError(missing_keys[0])
     
-    #check if Cleat.Angle_Type is a string.
+    #check if Seated.Angle_Type is a string.
     if not isinstance(input_values["Bolt.Bolt_Hole_Type"],str):
         #if not raise an error
         raise InvalidInputTypeError("Bolt.Bolt_Hole_Type")
@@ -65,7 +65,7 @@ def validate_input(input_values: Dict[str,Any])-> None:
             "Bolt.Diameter","non empty List[str] where all items can be converted to int"
         )
         
-    # validate cleat grade
+    # validate seated grade
     bolt_grade = input_values["Bolt.Grade"]
     if(not isinstance(bolt_grade,list)
         or not validate_list_type(bolt_grade,str)
@@ -76,7 +76,7 @@ def validate_input(input_values: Dict[str,Any])-> None:
             "Bolt.Grade", "non empty List[str] where all items can be converted to float"
         )
     
-    #Validate Cleat.Slip_Factor
+    #Validate seated.Slip_Factor
     bolt_slipfactor = input_values["Bolt.Slip_Factor"]
     if (not isinstance(bolt_slipfactor,str)
         or not float_able(bolt_slipfactor)):
@@ -84,12 +84,12 @@ def validate_input(input_values: Dict[str,Any])-> None:
             "Bolt.Slip_Factor", "str where str can be converted to float"
         )
         
-    #Validate Cleat.TensionType
+    #Validate seated.TensionType
     if not isinstance(input_values["Bolt.TensionType"], str):
         # If not, raise error.
         raise InvalidInputTypeError("Bolt.TensionType", "str")
     
-    #Validate Cleat.Type
+    #Validate seated.Type
     if not isinstance(input_values["Bolt.Type"], str):
         raise InvalidInputTypeError("Bolt.Type", "str")  # If not, raise error.
 
@@ -203,7 +203,7 @@ def validate_input_new(input_values: Dict[str, Any]) -> None:
     """Validate type for all values in design dict. Raise error when invalid"""
 
     # Check if all required keys exist
-    required_keys = get_required_keys_cleat_angle()
+    required_keys = get_required_keys_seated_angle()
     print('required_keys : ' , required_keys)
     # Check if input_values contains all required keys.
     missing_keys = contains_keys(input_values, required_keys)
@@ -259,13 +259,13 @@ def validate_input_new(input_values: Dict[str, Any]) -> None:
         # Check if key is a list where all items can be converted to numbers. If not, raise error.
         validate_arr(key[0], key[1])
 
-def create_module() -> CleatAngleConnection:
+def create_module() -> SeatedAngleConnection:
     """Create an instance of the fin plate connection module design class and set it up for use"""
-    module = CleatAngleConnection()  # Create an instance of the FinPlateConnection
+    module = SeatedAngleConnection()  # Create an instance of the FinPlateConnection
     module.set_osdaglogger(None)
     return module
 
-def create_from_input(input_values: Dict[str, Any]) -> CleatAngleConnection:
+def create_from_input(input_values: Dict[str, Any]) -> SeatedAngleConnection:
     """Create an instance of the fin plate connection module design class from input values."""
     # validate_input(input_values)
     try : 

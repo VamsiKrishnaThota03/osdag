@@ -44,6 +44,7 @@ class CreateSession(APIView):
     """
 
     def post(self,request) :
+        print("CreateSession view reached")
         module_id = request.data.get('module_id')
         print('module_id in session : ' , module_id)
         if module_id == None or module_id == '': # Error Checking: If module id provided.
@@ -64,7 +65,21 @@ class CreateSession(APIView):
         if module_id not in developed_modules: # Error Checking: Does module api exist
             print('module_id not developed')
             return JsonResponse("Error: This module has not been developed yet", status=501) # Return error response.
-    
+
+        # Define cookie keys for each module
+        cookie_keys = {
+            "Fin Plate Connection": "fin_plate_connection_session",
+            "End Plate Connection": "end_plate_connection_session",
+            "Cleat Angle Connection": "cleat_angle_connection_session",
+            "Seated Angle Connection": "seated_angle_connection"
+        }
+
+        # Check for existing sessions
+        for session_key in cookie_keys.values():
+            if request.COOKIES.get(session_key):
+                return Response({"status": "set"}, status=status.HTTP_200_OK)
+
+
         cookie_id = get_random_string(length=32) # creting a session from a random string
         print('cookie id in session : ' ,cookie_id)
         tempData = {
@@ -82,17 +97,14 @@ class CreateSession(APIView):
 
             # create HTTPResponse and set the cookie
             response = JsonResponse({"status" : "set"} , status=201)
-            if(module_id=="Fin Plate Connection"):
-             response.set_cookie(key = "fin_plate_connection_session", value = cookie_id , samesite = 'None' , secure = 'True') # Set session id cookie.
-            elif (module_id=="End Plate Connection"):
-                response.set_cookie(key = "end_plate_connection_session", value = cookie_id , samesite = 'None' , secure = 'True')
-                print("cookie Set")
-            elif ( module_id == "Cleat Angle Connection"):
-                response.set_cookie(key="cleat_angle_connection_session",value = cookie_id , samesite = 'None' , secure = 'True')
-                print("Cookie Set cleat")
-            elif (module_id == "Seated Angle Connection"):
-                response.set_cookie(key="Seated Angle Connection",value=cookie_id,samesite= 'None', secure='True')
-                print("Cookie set Seated")
+            
+            cookie_key = cookie_keys.get(module_id)
+            if cookie_key:
+                response.set_cookie(key=cookie_key, value=cookie_id, samesite='None', secure=True)
+                print(f"Cookie Set: {cookie_key}")
+            else:
+                print(f"Warning: Unknown module_id: {module_id}")
+                return Response({"error": "Invalid module_id"}, status=status.HTTP_400_BAD_REQUEST)
             return response
         else : 
             print('serializer is invalid')

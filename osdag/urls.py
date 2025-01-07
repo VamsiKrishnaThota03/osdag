@@ -15,6 +15,7 @@ from osdag.web_api.google_sso_api import GoogleSSOView
 from . import views
 from osdag.web_api.endplate_outputView import EndPLateOutputData
 from osdag.web_api.cleatangle_outputView import CleatAngleOutputData
+from osdag.web_api.seatedangle_outputView import SeatedAngleOutputData
 # temporary
 app_name = 'osdag-web/'
 
@@ -86,9 +87,9 @@ urlpatterns = [
          EndPLateOutputData.as_view(), name='End-Plate-Connection'),
     
     path('calculate-output/Cleat-Angle-Connection',
-         CleatAngleOutputData.as_view(),name="Cleat-Angle-Connection")
+         CleatAngleOutputData.as_view(),name="Cleat-Angle-Connection"),
     
-#     path('calculate-output/Seated-Angle-Connection',
-#          SeatedAngleOutputData.as_view(),name="Seated-Angle-Connection")
+    path('calculate-output/Seated-Angle-Connection',
+         SeatedAngleOutputData.as_view(),name="Seated-Angle-Connection")
 
 ]

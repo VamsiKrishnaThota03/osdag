@@ -279,17 +279,17 @@ export const ModuleProvider = ({ children }) => {
 
 
             if (response.status == 201) {
-                //console.log('The Session has been set in the cookie')
+                console.log('The Session has been set in the cookie')
                 state.sessionCreated = true
             } else if (response.status == 200) {
-                //console.log('Already in the editing module')
+                console.log('Already in the editing module')
                 state.sessionCreated = true
             } else {
-                //console.log('There is an error in setting a session in the cookie')
+                console.log('There is an error in setting a session in the cookie')
                 state.sessionCreated = false
             }
         } catch (err) {
-            //console.log('Error in creating a session')
+            console.log('Error in creating a session')
             state.sessionCreated = false
         }
     }

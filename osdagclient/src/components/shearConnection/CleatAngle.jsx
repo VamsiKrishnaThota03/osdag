@@ -342,61 +342,6 @@ function CleatAngle() {
     companyLogoName: "",
   });
 
-  const [selectedFile, setSelectedFile] = useState(null);
-
-  const handleFileChange = (file) => {
-    setSelectedFile(file);
-  };
-
-  const handleUseProfile = () => {
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const contents = event.target.result;
-        const lines = contents.split("\n");
-
-        lines.forEach((line) => {
-          const [field, value] = line.split(":");
-          const trimmedField = field.trim();
-          const trimmedValue = value.trim();
-
-          if (trimmedField === "CompanyName") {
-            setCompanyName(trimmedValue);
-          } else if (trimmedField === "Designer") {
-            setDesigner(trimmedValue);
-          } else if (trimmedField === "Group/TeamName") {
-            setGroupTeamName(trimmedValue);
-          }
-        });
-      };
-      reader.readAsText(selectedFile);
-    }
-  };
-
-  const handleSaveProfile = () => {
-    const profileSummary = `CompanyLogo: C:/Users/SURAJ/Pictures/codeup.png
-  CompanyName: ${companyName}
-  Designer: ${designer}
-  Group/TeamName: ${groupTeamName}`;
-
-    const blob = new Blob([profileSummary], {
-      type: "text/plain;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${companyName}.txt`;
-
-    link.style.display = "none";
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   const handleCreateDesignReport = () => {
     setCreateDesignReportBool(true);
   };

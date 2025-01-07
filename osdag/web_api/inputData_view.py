@@ -55,6 +55,8 @@ class InputData(APIView):
         propertyClass = request.GET.get("propertyClass")
         thickness = request.GET.get('thickness')
         angleList = request.GET.get('angleList')
+        topAngleList = request.GET.get('topAngleList')
+        seatedAngleList = request.GET.get('seatedAngleList')
         cookie_id = None
         
         if moduleName is not None:
@@ -78,7 +80,7 @@ class InputData(APIView):
             print('cookie_id inside end plate input data: ' , cookie_id)
             
         elif(moduleName=="Seated-Angle-Connection"):
-            cookie_id = request.COOKIES.get('seated_angle_connection_session')
+            cookie_id = request.COOKIES.get('seated_angle_connection')
             print('cookie id in seated angle connection input data ', cookie_id)
 
         if cookie_id == None or cookie_id == '': # Error Checking: If design session id provided.
@@ -98,6 +100,8 @@ class InputData(APIView):
             propertyClass = propertyClass,
             thickness = thickness,
             angleList = angleList,
+            seatedAngleList = seatedAngleList,
+            topAngleList =topAngleList,
             email = email
         )
 

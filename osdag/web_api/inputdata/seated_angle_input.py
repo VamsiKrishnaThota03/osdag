@@ -5,11 +5,11 @@ from osdag.models import Columns, Beams, Bolt, Bolt_fy_fu, Material, CustomMater
 
 class SeatedAngleInputData(InputDataBase):
     def process(self, **kwargs):
-        connectivity, boltDiameter = kwargs["connectivity"], kwargs["boltDiameter"]
+        connectivity, boltDiameter, seatedAngleList, topAngleList = kwargs["connectivity"], kwargs["boltDiameter"], kwargs["seatedAngleList"], kwargs["topAngleList"]
         propertyClass, thickness, email  = kwargs["propertyClass"], kwargs["thickness"], kwargs["email"]
         
-        if (connectivity is None and boltDiameter is None and propertyClass is None and thickness is None):
-            # fetch the list of all the connectivity options for Fin-Plate-Connection
+        if (connectivity is None and boltDiameter is None and propertyClass is None and thickness is None and seatedAngleList is None and topAngleList is None):
+            # fetch the list of all the connectivity options for Seated-Angle-Connection
             print("\n\n")
             print('inside connectivtityList handling ')
             print("\n\n")
@@ -20,7 +20,6 @@ class SeatedAngleInputData(InputDataBase):
             return Response(response, status=status.HTTP_200_OK)
         if(connectivity == 'Column-Flange-Beam-Web' or connectivity == 'Column-Web-Beam-Web'):
             # print('connectivity : ', connectivity)
-
             try:
                 # fetch all records from Column table
                 # fetch all records from Beam table
@@ -107,6 +106,47 @@ class SeatedAngleInputData(InputDataBase):
 
             except:
                 return Response({"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        elif (seatedAngleList == 'Customized'):
+            print('seatedAngleList : ', seatedAngleList)
+
+            # fetch the data from Bolt_fy_fu table
+            try:
+                #boltFyFuList = list(Bolt_fy_fu.objects.values_list(
+                #    'Property_Class', flat=True))
+                seatedAngleList = ['50 x 50 x 3', '50 x 50 x 4', '50 x 50 x 5', '50 x 50 x 6', '55 x 55 x 4', '55 x 55 x 5', '55 x 55 x 6', '55 x 55 x 8', '60 x 60 x 4', '60 x 60 x 5', '60 x 60 x 6', '60 x 60 x 8', '65 x 65 x 4', '65 x 65 x 5', '65 x 65 x 6', '65 x 65 x 8', '70 x 70 x 5', '70 x 70 x 6', '70 x 70 x 8', '70 x 70 x 10', '75 x 75 x 5', '75 x 75 x 6', '75 x 75 x 8', '75 x 75 x 10', '80 x 80 x 6', '80 x 80 x 8', '80 x 80 x 10', '80 x 80 x 12', '90 x 90 x 6', '90 x 90 x 8', '90 x 90 x 10', '90 x 90 x 12', '100 x 100 x 6', '100 x 100 x 8', '100 x 100 x 10', '100 x 100 x 12', '110 x 110 x 8', '110 x 110 x 10', '110 x 110 x 12', '110 x 110 x 16', '130 x 130 x 8', '130 x130 x 10', '130 x130 x 12', '130 x130 x 16', '150 x 150 x 10', '150 x 150 x 12', '150 x 150 x 16', '150 x 150 x 20', '200 x 200 x 12', '200 x 200 x 16', '200 x 200 x 20', '200 x 200 x 25', '50 x 50 x 7', '50 x 50 x 8', '55 x 55 x 10', '60 x 60 x 10', '65 x 65 x 10', '70 x 70 x 7', '100 x 100 x 7', '100 x 100 x 15', '120 x 120 x 8', '120 x 120 x 10', '120 x 120 x 12', '120 x 120 x 15', '130 x 130 x 9', '150 x 150 x 15', '150 x 150 x 18', '180 x 180 x 15', '180 x 180 x 18', '180 x 180 x 20', '200 x 200 x 24']
+                # boltFyFuList.sort()
+
+                response = {
+                    'seatedAngleList': seatedAngleList
+                }
+                print('seatedAngleList : ', seatedAngleList)
+
+                return Response(response, status=status.HTTP_200_OK)
+
+            except:
+                return Response({"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        elif (topAngleList == 'Customized'):
+            print('seatedAngleList : ', seatedAngleList)
+
+            # fetch the data from Bolt_fy_fu table
+            try:
+                #boltFyFuList = list(Bolt_fy_fu.objects.values_list(
+                #    'Property_Class', flat=True))
+                topAngleList = ['50 x 50 x 3', '50 x 50 x 4', '50 x 50 x 5', '50 x 50 x 6', '55 x 55 x 4', '55 x 55 x 5', '55 x 55 x 6', '55 x 55 x 8', '60 x 60 x 4', '60 x 60 x 5', '60 x 60 x 6', '60 x 60 x 8', '65 x 65 x 4', '65 x 65 x 5', '65 x 65 x 6', '65 x 65 x 8', '70 x 70 x 5', '70 x 70 x 6', '70 x 70 x 8', '70 x 70 x 10', '75 x 75 x 5', '75 x 75 x 6', '75 x 75 x 8', '75 x 75 x 10', '80 x 80 x 6', '80 x 80 x 8', '80 x 80 x 10', '80 x 80 x 12', '90 x 90 x 6', '90 x 90 x 8', '90 x 90 x 10', '90 x 90 x 12', '100 x 100 x 6', '100 x 100 x 8', '100 x 100 x 10', '100 x 100 x 12', '110 x 110 x 8', '110 x 110 x 10', '110 x 110 x 12', '110 x 110 x 16', '130 x 130 x 8', '130 x130 x 10', '130 x130 x 12', '130 x130 x 16', '150 x 150 x 10', '150 x 150 x 12', '150 x 150 x 16', '150 x 150 x 20', '200 x 200 x 12', '200 x 200 x 16', '200 x 200 x 20', '200 x 200 x 25', '50 x 50 x 7', '50 x 50 x 8', '55 x 55 x 10', '60 x 60 x 10', '65 x 65 x 10', '70 x 70 x 7', '100 x 100 x 7', '100 x 100 x 15', '120 x 120 x 8', '120 x 120 x 10', '120 x 120 x 12', '120 x 120 x 15', '130 x 130 x 9', '150 x 150 x 15', '150 x 150 x 18', '180 x 180 x 15', '180 x 180 x 18', '180 x 180 x 20', '200 x 200 x 24']
+                # boltFyFuList.sort()
+
+                response = {
+                    'topAngleList': topAngleList
+                }
+                print('topAngleList : ', topAngleList)
+
+                return Response(response, status=status.HTTP_200_OK)
+
+            except:
+                return Response({"error": "Something went wrong"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         elif (thickness == 'Customized'):
             # print('thickness : ', thickness)
