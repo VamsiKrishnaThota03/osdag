@@ -74,7 +74,7 @@ export default (state, action) => {
             console.log("XDXD", action.payload)
             return{
                 ...state,
-                angleList : action.payload.angleList
+                angleList : action.payload.angleList || [],
             }
         case 'SET_DESIGN_DATA_AND_LOGS' :   
             return{

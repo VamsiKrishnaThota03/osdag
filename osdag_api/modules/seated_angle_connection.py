@@ -39,7 +39,7 @@ def get_required_keys_seated_angle() -> List[str]:
         "Module",
         "Weld.Fab",
         "Weld.Material_Grade_OverWrite",
-        "Connector.Plate.Thickness_List",
+        "Connector.Angle_List"
     ]
 
 def validate_input(input_values: Dict[str,Any])-> None:
@@ -188,16 +188,6 @@ def validate_input(input_values: Dict[str,Any])-> None:
         # If any of these conditions fail, raise error.
         raise InvalidInputTypeError(
             "Weld.Material_Grade_OverWrite", "str where str can be converted to int.")
-
-    # Validate Connector.Plate.Thickness_List
-    connector_plate_thicknesslist = input_values["Connector.Plate.Thickness_List"]
-    if (not isinstance(connector_plate_thicknesslist, list)  # Check if Connector.Plate.Thickness_List is a list.
-            # Check if all items in Connector.Plate.Thickness_List are str.
-            or not validate_list_type(connector_plate_thicknesslist, str)
-            or not custom_list_validation(connector_plate_thicknesslist, int_able)):  # Check if all items in Connector.Plate.Thickness_List can be converted to int.
-        raise InvalidInputTypeError(
-            "Connector.Plate.Thickness_List", "List[str] where all items can be converted to int")
-
 
 def validate_input_new(input_values: Dict[str, Any]) -> None:
     """Validate type for all values in design dict. Raise error when invalid"""

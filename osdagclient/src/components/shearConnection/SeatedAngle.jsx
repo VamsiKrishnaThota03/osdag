@@ -109,7 +109,10 @@ function SeatedAngle() {
   const [confirmationModal, setConfirmationModal] = useState(false)
   const [displaySaveInputPopup , setDisplaySaveInputPopup] = useState(false)
   const [saveInputFileName , setSaveInputFileName] = useState("")
-  const {connectivityList, beamList, columnList, materialList, boltDiameterList, thicknessList, propertyClassList, designLogs, designData, displayPDF, renderCadModel, createSession, createDesign, createDesignReport, getDesingPrefData,deleteSession } = useContext(ModuleContext)
+  const {connectivityList, angleList, beamList, columnList, materialList, boltDiameterList, thicknessList, propertyClassList, designLogs, designData, displayPDF, renderCadModel, createSession, createDesign, createDesignReport, getDesingPrefData,deleteSession } = useContext(ModuleContext)
+  const [angleModal, setAngleModal] = useState(false);
+  const [connectorAngleSelect, setAngleSelect] = useState("All");
+
 
   if(displaySaveInputPopup)[
     setTimeout(() => setDisplaySaveInputPopup(false) , 4000)
@@ -122,7 +125,6 @@ function SeatedAngle() {
     connector_material: "E 250 (Fe 410 W)A",
     load_shear: "70",
     module: "Seated Angle Connection",
-    plate_thickness: [],
     beam_section: "MB 300",
     column_section: "HB 150",
     primary_beam: "JB 200",
@@ -137,13 +139,12 @@ function SeatedAngle() {
     detailing_gap: "10",
     detailing_corr_status: "No",
     design_method: "Limit State Design",
-    bolt_tension_type: "Pre-tensioned"
+    bolt_tension_type: "Pre-tensioned",
+    angle_list: [],
   })
 
   const [isModalpropertyClassListOpen, setModalpropertyClassListOpen] = useState(false);
-  const [plateThicknessModal, setPlateThicknessModal] = useState(false)
   const [allSelected, setAllSelected] = useState({
-    plate_thickness: true,
     bolt_diameter: true,
     bolt_grade: true,
   })
@@ -187,6 +188,23 @@ function SeatedAngle() {
       setModalpropertyClassListOpen(false);
     }
   };
+  const handleAllSelectAngle = (value) => {
+    if (value === "Customized") {
+      if (inputs.angle_list.length != 0) {
+        setInputs({ ...inputs, angle_list: inputs.angle_list });
+      } else {
+        // if the length is 0 , then set it to an empty array
+        setInputs({ ...inputs, angle_list: [] });
+      }
+      setAngleSelect("Customized");
+      setAllSelected({ ...allSelected, angle_list: false });
+      setAngleModal(true);
+    } else {
+      setAngleSelect("All");
+      setAllSelected({ ...allSelected, angle_list: true });
+      setAngleModal(false);
+    }
+  };
 
   const handleSelectChangeBoltBeam = (value) => {
     if (value === 'Customized') {
@@ -205,25 +223,6 @@ function SeatedAngle() {
       setBoltDiameterSelect("All")
       setAllSelected({ ...allSelected, bolt_diameter: true });
       setModalOpen(false);
-    }
-  };
-  const handleAllSelectPT = (value) => {
-    if (value === 'Customized') {
-      // check, if the plate_thickness already has a value, then set it to that value 
-      // else, set it to an empty list 
-      if (inputs.plate_thickness.length != 0) {
-        setInputs({ ...inputs, plate_thickness: inputs.plate_thickness })
-      } else {
-        // if the length is 0 , then set it to an empty array 
-        setInputs({ ...inputs, plate_thickness: [] })
-      }
-      setThicknessSelect("Customized")
-      setAllSelected({ ...allSelected, plate_thickness: false });
-      setPlateThicknessModal(true);
-    } else {
-      setThicknessSelect("All")
-      setAllSelected({ ...allSelected, plate_thickness: true });
-      setPlateThicknessModal(false);
     }
   };
 
@@ -318,7 +317,9 @@ function SeatedAngle() {
         "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
-        "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness
+        "Connector.Angle_List": (connectorAngleSelect == "All")
+          ? angleList
+          : inputs.angle_list,
       }
     }
     else {
@@ -348,7 +349,9 @@ function SeatedAngle() {
         "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
-        "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness
+        "Connector.Angle_List": (connectorAngleSelect == "All")
+          ? angleList
+          : inputs.angle_list,
       }
     }
     createDesign(param,"Seated-Angle-Connection")
@@ -508,7 +511,9 @@ function SeatedAngle() {
         "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
-        "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness
+        "Connector.Angle_List": (connectorAngleSelect == "All")
+          ? angleList
+          : inputs.angle_list,
       }
     }
     else {
@@ -538,7 +543,9 @@ function SeatedAngle() {
         "Module": "Seated Angle Connection",
         "Weld.Fab": inputs.weld_fab,
         "Weld.Material_Grade_OverWrite": inputs.weld_material_grade,
-        "Connector.Plate.Thickness_List": allSelected.plate_thickness ? thicknessList : inputs.plate_thickness,
+        "Connector.Angle_List": (connectorAngleSelect == "All")
+          ? angleList
+          : inputs.angle_list,
       }
     }
 
@@ -582,7 +589,6 @@ function SeatedAngle() {
         connector_material: inputs.connector_material,
         load_shear: "",
         module: "Seated Angle Connection",
-        plate_thickness: inputs.plate_thickness,
         beam_section: "Select Section",
         column_section: "Select Section",
       })
@@ -595,7 +601,6 @@ function SeatedAngle() {
         connector_material: inputs.connector_material,
         load_shear: "",
         module: "Seated Angle Connection",
-        plate_thickness: inputs.plate_thickness,
         primary_beam: "JB 200",
         secondary_beam: "JB 150",
       })
@@ -603,7 +608,6 @@ function SeatedAngle() {
 
     // reset setAllSelected
     setAllSelected({
-      plate_thickness: true,
       bolt_diameter: true,
       bolt_grade: true,
     })
@@ -628,6 +632,14 @@ function SeatedAngle() {
   //  const [selectedItems, setSelectedItems] = useState([]);
   const [selectedDiameterNewItems, setSelectedDiameterNewItems] = useState([]);
 
+  //for seated angle list
+  const [selectedAngleListItems, setselectedAngleListItems] = useState([]);
+
+  const handleTransferChangeInAngleList = (nextTargetKeys) => {
+    setselectedAngleListItems(nextTargetKeys);
+    setInputs({ ...inputs, angle_list: nextTargetKeys });
+  };
+
   const handleTransferChange = (nextTargetKeys) => {
     setSelectedDiameterNewItems(nextTargetKeys);
     setInputs({ ...inputs, bolt_diameter: nextTargetKeys })
@@ -641,13 +653,7 @@ function SeatedAngle() {
     setInputs({ ...inputs, bolt_grade: nextTargetKeys })
   };
   // 
-  // plate_thickness
-  const [selectedPlateThicknessItems, setSelectedPlateThicknessItems] = useState([]);
-
-  const handleTransferChangeInPlateThickness = (nextTargetKeys) => {
-    setSelectedPlateThicknessItems(nextTargetKeys);
-    setInputs({ ...inputs, plate_thickness: nextTargetKeys })
-  };
+  
 
   // Get local Stored Items
 
@@ -735,6 +741,7 @@ function SeatedAngle() {
     }
   }
 
+  console.log(angleList)
   const navigate = useNavigate();
   return (
     <>
@@ -1015,43 +1022,83 @@ function SeatedAngle() {
               {/* Section End */}
               <h3>Angle Section</h3>
               <div className='component-grid    '>
-                <div><h4>Seated Angle</h4></div>
                 <div>
-                  <Select style={{ width: '100%' }} onSelect={handleAllSelectPT} value={thicknessSelect}>
-                    <Option value="Customized">Customized</Option>
-                    <Option value="All">All</Option>
-                  </Select>
+                  <h4>Cleat section* </h4>
                 </div>
-                <div><h4>Top Angle</h4></div>
                 <div>
-                  <Select style={{ width: '100%' }} onSelect={handleAllSelectPT} value={thicknessSelect}>
+                  <Select
+                    style={{ width: "100%" }}
+                    onSelect={handleAllSelectAngle}
+                    value={connectorAngleSelect}
+                  >
                     <Option value="Customized">Customized</Option>
                     <Option value="All">All</Option>
                   </Select>
                 </div>
                 <Modal
-                  open={plateThicknessModal}
-                  onCancel={() => setPlateThicknessModal(false)}
+                  open={angleModal}
+                  onCancel={() => setAngleModal(false)}
                   footer={null}
                   width={700}
                   height={700}
                 >
                   <div>
-                    <div style={{ display: 'flex' }}>
-                      <div style={{ marginRight: '20px' }}>
+                    <div style={{ display: "flex" }}>
+                      <div style={{ marginRight: "20px" }}>
                         <h3>Customized</h3>
                         <Transfer
-                          dataSource={propertyClassList
-                            .sort((a, b) => Number(a) - Number(b))
+                          dataSource={angleList
+                            .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                             .map((label) => ({
                               key: label,
                               label: <h5>{label}</h5>,
-                            }))
-                          }
-                          targetKeys={selectedPlateThicknessItems}
-                          onChange={handleTransferChangeInPlateThickness}
+                            }))}
+                          targetKeys={selectedAngleListItems}
+                          onChange={handleTransferChangeInAngleList}
                           render={(item) => item.label}
-                          titles={['Available', 'Selected']}
+                          titles={["Available", "Selected"]}
+                          showSearch
+                          listStyle={{ height: 600, width: 300 }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Modal>
+                <div>
+                  <h4>Top section* </h4>
+                </div>
+                <div>
+                  <Select
+                    style={{ width: "100%" }}
+                    onSelect={handleAllSelectAngle}
+                    value={connectorAngleSelect}
+                  >
+                    <Option value="Customized">Customized</Option>
+                    <Option value="All">All</Option>
+                  </Select>
+                </div>
+                <Modal
+                  open={angleModal}
+                  onCancel={() => setAngleModal(false)}
+                  footer={null}
+                  width={700}
+                  height={700}
+                >
+                  <div>
+                    <div style={{ display: "flex" }}>
+                      <div style={{ marginRight: "20px" }}>
+                        <h3>Customized</h3>
+                        <Transfer
+                          dataSource={angleList
+                            .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+                            .map((label) => ({
+                              key: label,
+                              label: <h5>{label}</h5>,
+                            }))}
+                          targetKeys={selectedAngleListItems}
+                          onChange={handleTransferChangeInAngleList}
+                          render={(item) => item.label}
+                          titles={["Available", "Selected"]}
                           showSearch
                           listStyle={{ height: 600, width: 300 }}
                         />

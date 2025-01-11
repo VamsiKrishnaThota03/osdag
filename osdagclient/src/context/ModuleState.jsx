@@ -225,7 +225,7 @@ export const ModuleProvider = ({ children }) => {
 
     const getCleatAngleList = async () => {
         try {
-            const response = await fetch(`${BASE_URL}populate?moduleName=Cleat-Angle-Connection&angleList=Customized`, {
+            const response = await fetch(`${BASE_URL}populate?moduleName=${state.currentModuleName}&angleList=Customized`, {
                 method: 'GET',
                 mode: 'cors',
                 credentials: 'include'
@@ -259,13 +259,14 @@ export const ModuleProvider = ({ children }) => {
                 }
                 else if (module_id=='Cleat Angle Connection'){
                     getConnectivityList('Cleat-Angle-Connection')
-                    getCleatAngleList()
+                    getCleatAngleList('Cleat-Angle-Connection')
                 }
                 else if (module_id=='End Plate Connection'){
                     getConnectivityList('End-Plate-Connection')
                 }
-                else{
+                else if (module_id == 'Seated Angle Connection'){
                     getConnectivityList('Seated-Angle-Connection')
+                    getCleatAngleList('Seated-Angle-Connection')
                 }
 
                 getColumnBeamMaterialList(state.currentModuleName, 'Column-Flange-Beam-Web')
