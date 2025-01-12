@@ -8,7 +8,6 @@ from cad.common_logic import CommonDesignLogic
 from design_type.connection.cleat_angle_connection import CleatAngleConnection
 import sys
 import os
-import typing
 from typing import Dict, Any, List
 import traceback
 
@@ -260,13 +259,13 @@ def validate_input_new(input_values: Dict[str, Any]) -> None:
         validate_arr(key[0], key[1])
 
 def create_module() -> CleatAngleConnection:
-    """Create an instance of the fin plate connection module design class and set it up for use"""
-    module = CleatAngleConnection()  # Create an instance of the FinPlateConnection
+    """Create an instance of the cleat angle connection module design class and set it up for use"""
+    module = CleatAngleConnection()  # Create an instance of the CleatAngleConnection
     module.set_osdaglogger(None)
     return module
 
 def create_from_input(input_values: Dict[str, Any]) -> CleatAngleConnection:
-    """Create an instance of the fin plate connection module design class from input values."""
+    """Create an instance of the cleat angle connection module design class from input values."""
     # validate_input(input_values)
     try : 
         module = create_module()  # Create module instance.

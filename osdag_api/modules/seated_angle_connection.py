@@ -8,7 +8,6 @@ from cad.common_logic import CommonDesignLogic
 from design_type.connection.seated_angle_connection import SeatedAngleConnection
 import sys
 import os
-import typing
 from typing import Dict, Any, List
 import traceback
 
@@ -39,7 +38,8 @@ def get_required_keys_seated_angle() -> List[str]:
         "Module",
         "Weld.Fab",
         "Weld.Material_Grade_OverWrite",
-        "Connector.Angle_List"
+        "Connector.Angle_List",
+        "Connector.Top_Angle"
     ]
 
 def validate_input(input_values: Dict[str,Any])-> None:
@@ -242,8 +242,7 @@ def validate_input_new(input_values: Dict[str, Any]) -> None:
 
     # Validate for keys that are arrays
     arr_keys = [("Bolt.Diameter", False),  # List of all parameters that can be converted to numbers (key, is_float)
-                ("Bolt.Grade", True),
-                ("Connector.Plate.Thickness_List", False)]
+                ("Bolt.Grade", True),]
     for key in arr_keys:
         print('validating arr key')
         # Check if key is a list where all items can be converted to numbers. If not, raise error.

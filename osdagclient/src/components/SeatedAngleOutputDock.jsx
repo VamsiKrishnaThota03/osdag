@@ -8,55 +8,67 @@ import capacityIMG2 from '../assets/L.png'
 const placeholderOutput = {
 	Bolt: [
 		{
+			label: "Rows of Bolts",
+			val: 0
+		},
+		{
+			label: "Columns of Bolts",
+			val: 0
+		},
+		{
+			label: "Gauge Distance (mm)",
+			val: 0
+		},
+		{
 			label: "Diameter (mm)",
 			val: 0
 		},
 		{
 			label: "Property Class",
-			val: 0
-		},
-		{
-			label: "shear Capacity (KN)",
-			val: 0
-		},
-		{
-			label: "Bolt Force (KN)",
-			val: 0
-		},
-		{
-			label: "Bolt Column (nos)",
 			val: 0	
 		},
 		{
-			label: "Bolt Rows (nos)",
+			label: "Number of Bolts",
+			val: 0
+		},
+		{
+			label: "Shear Capacity (kN)",
+			val: 0
+		},
+		{
+			label: "Bearing Capacity (kN)",
+			val: 0
+		},
+		{
+			label: "β<sub>lg</sub>",
+			val: 0
+		},
+		{
+			label: "Bolt Value (kN)",
+			val: 0
+		},
+		{
+			label: "Bolt Shear Force (kN)",
 			val: 0
 		}
 	],
-	Plate: [
+	SeatedAngle: [
 		{
-			label: "Thickness (mm)",
+			label: "Designation",
 			val: 0
 		},
 		{
-			label: "Height (mm)",
-			val: 0
-		},
-		{
-			label: "Length (mm)",
+			label: "Width (mm)",
 			val: 0
 		}
 	],
-	Weld: [
+	TopAngle: [
 		{
-			label: "Size (mm)",
+			label: "Designation",
 			val: 0
 		},
 		{
-			label: "Strength (N/mm2)",
-			val: 0
-		},
-		{
-			label: "Stress (N/mm)",
+			label: "Width (mm)",
 			val: 0
 		}
 	]
@@ -66,7 +78,7 @@ const placeholderOutput = {
 const platePopUpFields = ['Shear Yielding Capacity (kN)', 'Rupture Capacity (kN)', 'Block Shear Capacity (kN)', 'Tension Yielding Capacity (kN)', 'Tension Rupture Capacity (kN)', 'Axial Block Shear Capacity (kN)', 'Moment Demand (kNm)', 'Moment Capacity (kNm)']
 const boltPopUpFields = ['Pitch Distance (mm)', 'End Distance (mm)', 'Edge Distance (mm)']
 
-const OutputDock = ({ output }) => {
+const SeatedAngleOutputDock = ({ output }) => {
 
 	const [spacingModel, setSpacingModel] = useState(false);
 	const [capacityModel, setCapacityModel] = useState(false);
@@ -96,7 +108,7 @@ const OutputDock = ({ output }) => {
 								<h3>{key}</h3>
 								<div >
 									{Object.values(output[key]).map((elm, index1) => {
-										if(key == "Plate" && platePopUpFields.includes(elm.label))
+										if(key == "SeatedAngle" && platePopUpFields.includes(elm.label))
 											return (<></>)
 										else if(key == "Bolt" && boltPopUpFields.includes(elm.label))
 											return (<></>)
@@ -114,7 +126,7 @@ const OutputDock = ({ output }) => {
 														disabled
 													/>
 												</div>
-												{(key !== "Weld" && index1 == (Object.values(output[key])?.length-1)) &&
+												{(key !== "TopAngle" && index1 == (Object.values(output[key])?.length-1)) &&
 												<>
 												<div>
 													<h4>{key == "Bolt" ? "Spacing" : "Capacity"}</h4>
@@ -158,7 +170,7 @@ const OutputDock = ({ output }) => {
 										<h3>{key}</h3>
 										<div >
 											{Object.values(placeholderOutput[key]).map((elm, index1) => {
-												if(key == "Plate" && platePopUpFields.includes(elm.label))
+												if(key == "SeatedAngle" && platePopUpFields.includes(elm.label))
 													return (<></>)
 												else if(key == "Bolt" && boltPopUpFields.includes(elm.label))
 													return (<></>)
@@ -176,7 +188,7 @@ const OutputDock = ({ output }) => {
 																disabled
 															/>
 														</div>
-														{(key !== "Weld" && index1 == (Object.values(placeholderOutput[key])?.length-1)) &&
+														{(key !== "TopAngle" && index1 == (Object.values(placeholderOutput[key])?.length-1)) &&
 														<>
 														<div>
 															<h4>{key == "Bolt" ? "Spacing" : "Capacity"}</h4>
@@ -198,7 +210,7 @@ const OutputDock = ({ output }) => {
 										</div>
 									</div>
 									{
-								(key === "Plate") &&
+								(key === "SeatedAngle") &&
 								<div style={{marginTop: '7px', marginBottom: '7px'}}>
 									<h4>Section Details</h4>
 									<div className='component-grid'>
@@ -505,4 +517,4 @@ const OutputDock = ({ output }) => {
 	)
 }
 
-export default OutputDock
+export default SeatedAngleOutputDock

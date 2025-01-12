@@ -7,7 +7,8 @@ import CFBW from '../../assets/ShearConnection/sc_fin_plate/fin_cf_bw.png'
 import CWBW from '../../assets/ShearConnection/sc_fin_plate/fin_cw_bw.png'
 import BB from '../../assets/ShearConnection/sc_fin_plate/fin_beam_beam.png'
 import ErrorImg from '../../assets/notSelected.png'
-import OutputDock from '../OutputDock';
+// import OutputDock from '../OutputDock';
+import SeatedAngleOutputDock from '../SeatedAngleOutputDock';
 import Logs from '../Logs';
 import Model from './threerender'
 import { Canvas } from '@react-three/fiber'
@@ -102,16 +103,18 @@ function SeatedAngle() {
   const [logs, setLogs] = useState(null)
   const [displayOutput, setDisplayOutput] = useState()
   const [boltDiameterSelect, setBoltDiameterSelect] = useState("All")
-  const [thicknessSelect, setThicknessSelect] = useState("All")
   const [propertyClassSelect, setPropertyClassSelect] = useState("All")
   const [designPrefModalStatus, setDesignPrefModalStatus] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [confirmationModal, setConfirmationModal] = useState(false)
   const [displaySaveInputPopup , setDisplaySaveInputPopup] = useState(false)
   const [saveInputFileName , setSaveInputFileName] = useState("")
-  const {connectivityList, angleList, beamList, columnList, materialList, boltDiameterList, thicknessList, propertyClassList, designLogs, designData, displayPDF, renderCadModel, createSession, createDesign, createDesignReport, getDesingPrefData,deleteSession } = useContext(ModuleContext)
+  const {connectivityList, angleList, topAngleList,beamList, columnList, materialList, boltDiameterList, propertyClassList, designLogs, designData, displayPDF, renderCadModel, createSession, createDesign, createDesignReport, getDesingPrefData,deleteSession } = useContext(ModuleContext)
   const [angleModal, setAngleModal] = useState(false);
   const [connectorAngleSelect, setAngleSelect] = useState("All");
+
+  const [topModal, setTopModal] = useState(false);
+  const [connectorTopSelect, setTopSelect] = useState("All");
 
 
   if(displaySaveInputPopup)[
@@ -141,6 +144,7 @@ function SeatedAngle() {
     design_method: "Limit State Design",
     bolt_tension_type: "Pre-tensioned",
     angle_list: [],
+    topangle_list: [],
   })
 
   const [isModalpropertyClassListOpen, setModalpropertyClassListOpen] = useState(false);
@@ -203,6 +207,24 @@ function SeatedAngle() {
       setAngleSelect("All");
       setAllSelected({ ...allSelected, angle_list: true });
       setAngleModal(false);
+    }
+  };
+
+  const handleAllSelectTopAngle = (value) => {
+    if (value === "Customized") {
+      if (inputs.angle_list.length != 0) {
+        setInputs({ ...inputs, angle_list: inputs.angle_list });
+      } else {
+        // if the length is 0 , then set it to an empty array
+        setInputs({ ...inputs, angle_list: [] });
+      }
+      setTopSelect("Customized");
+      setAllSelected({ ...allSelected, angle_list: false });
+      setTopModal(true);
+    } else {
+      setTopSelect("All");
+      setAllSelected({ ...allSelected, angle_list: true });
+      setTopModal(false);
     }
   };
 
@@ -320,6 +342,9 @@ function SeatedAngle() {
         "Connector.Angle_List": (connectorAngleSelect == "All")
           ? angleList
           : inputs.angle_list,
+        "Connector.Top_Angle": (connectorTopSelect == "All")
+          ? topAngleList
+          : inputs.topangle_list,
       }
     }
     else {
@@ -352,6 +377,9 @@ function SeatedAngle() {
         "Connector.Angle_List": (connectorAngleSelect == "All")
           ? angleList
           : inputs.angle_list,
+          "Connector.Top_Angle": (connectorTopSelect == "All")
+            ? topAngleList
+            : inputs.topangle_list,
       }
     }
     createDesign(param,"Seated-Angle-Connection")
@@ -514,6 +542,9 @@ function SeatedAngle() {
         "Connector.Angle_List": (connectorAngleSelect == "All")
           ? angleList
           : inputs.angle_list,
+          "Connector.Top_Angle": (connectorTopSelect == "All")
+            ? topAngleList
+            : inputs.topangle_list,
       }
     }
     else {
@@ -546,6 +577,9 @@ function SeatedAngle() {
         "Connector.Angle_List": (connectorAngleSelect == "All")
           ? angleList
           : inputs.angle_list,
+        "Connector.Top_Angle": (connectorTopSelect == "All")
+            ? topAngleList
+            : inputs.topangle_list,
       }
     }
 
@@ -614,8 +648,6 @@ function SeatedAngle() {
 
     setBoltDiameterSelect("All")
     setPropertyClassSelect("All")
-    setThicknessSelect("All")
-    handleAllSelectPT("All") // for thickness
     handleSelectChangePropertyClass("All")  // for property Class
     handleSelectChangeBoltBeam("All") // for bolt diameter
 
@@ -635,9 +667,18 @@ function SeatedAngle() {
   //for seated angle list
   const [selectedAngleListItems, setselectedAngleListItems] = useState([]);
 
+  
+  //for top angle list
+  const [selectedTopAngleItems, setselectedTopAngleItems] = useState([]);
+
   const handleTransferChangeInAngleList = (nextTargetKeys) => {
     setselectedAngleListItems(nextTargetKeys);
     setInputs({ ...inputs, angle_list: nextTargetKeys });
+  };
+
+  const handleTransferChangeInTopAngle = (nextTargetKeys) => {
+    setselectedTopAngleItems(nextTargetKeys);
+    setInputs({ ...inputs, topangle_list: nextTargetKeys });
   };
 
   const handleTransferChange = (nextTargetKeys) => {
@@ -742,6 +783,7 @@ function SeatedAngle() {
   }
 
   console.log(angleList)
+  console.log("topAngleList:", topAngleList);
   const navigate = useNavigate();
   return (
     <>
@@ -1070,16 +1112,16 @@ function SeatedAngle() {
                 <div>
                   <Select
                     style={{ width: "100%" }}
-                    onSelect={handleAllSelectAngle}
-                    value={connectorAngleSelect}
+                    onSelect={handleAllSelectTopAngle}
+                    value={connectorTopSelect}
                   >
                     <Option value="Customized">Customized</Option>
                     <Option value="All">All</Option>
                   </Select>
                 </div>
                 <Modal
-                  open={angleModal}
-                  onCancel={() => setAngleModal(false)}
+                  open={topModal}
+                  onCancel={() => setTopModal(false)}
                   footer={null}
                   width={700}
                   height={700}
@@ -1089,14 +1131,14 @@ function SeatedAngle() {
                       <div style={{ marginRight: "20px" }}>
                         <h3>Customized</h3>
                         <Transfer
-                          dataSource={angleList
+                          dataSource={topAngleList
                             .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                             .map((label) => ({
                               key: label,
                               label: <h5>{label}</h5>,
                             }))}
-                          targetKeys={selectedAngleListItems}
-                          onChange={handleTransferChangeInAngleList}
+                          targetKeys={selectedTopAngleItems}
+                          onChange={handleTransferChangeInTopAngle}
                           render={(item) => item.label}
                           titles={["Available", "Selected"]}
                           showSearch
@@ -1135,7 +1177,7 @@ function SeatedAngle() {
           </div>
           {/* Right */}
           <div>
-            {<OutputDock output={output} />}
+            {<SeatedAngleOutputDock output={output} />}
             <div className='outputdock-btn'>
               <Input type="button" value="Create Design Report" onClick={handleCreateDesignReport} />
               <Input type="button" value="Save Output" onClick={saveOutput} />

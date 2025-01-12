@@ -7,7 +7,8 @@ import CFBW from "../../assets/ShearConnection/sc_fin_plate/fin_cf_bw.png";
 import CWBW from "../../assets/ShearConnection/sc_fin_plate/fin_cw_bw.png";
 import BB from "../../assets/ShearConnection/sc_fin_plate/fin_beam_beam.png";
 import ErrorImg from "../../assets/notSelected.png";
-import OutputDock from "../OutputDock";
+// import OutputDock from "../OutputDock";
+import CleatAngleOutputDock from "../CleatAngleOutputDock";
 import Logs from "../Logs";
 import Model from "./threerender";
 import { Canvas } from "@react-three/fiber";
@@ -1122,7 +1123,7 @@ function CleatAngle() {
           </div>
           {/* Right */}
           <div>
-            {<OutputDock output={output} connectionType={"Cleat Angle Connection"}  />}
+            {<CleatAngleOutputDock output={output} connectionType={"Cleat Angle Connection"}  />}
             <div className="outputdock-btn">
               <Input
                 type="button"

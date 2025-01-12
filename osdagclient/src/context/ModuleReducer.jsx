@@ -71,11 +71,19 @@ export default (state, action) => {
                 propertyClassList : action.payload.propertyClassList
             }
         case 'SET_CLEAT_ANGLE_LIST' : 
-            console.log("XDXD", action.payload)
+            console.log("angleList", action.payload)
             return{
                 ...state,
                 angleList : action.payload.angleList || [],
             }
+
+        case 'SET_TOP_ANGLE' :
+            console.log("topAngleList", action.payload)
+            return{
+                ...state,
+                topAngleList : action.payload.topAngleList || [],
+            }
+
         case 'SET_DESIGN_DATA_AND_LOGS' :   
             return{
                 ...state,

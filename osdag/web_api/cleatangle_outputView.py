@@ -150,9 +150,8 @@ class CleatAngleOutputData(APIView):
         for item in logs : 
             print('item : ' , item)
             print('item.keys : ' , item.keys())
-            item['type'] = item['type'].upper()
             msg = item['msg']
-            finalLogsString = finalLogsString + item['type'] + " : " + msg + '\n'
+            finalLogsString = finalLogsString + msg + '\n'
 
         print('finalLogsString : ' , finalLogsString)
         return finalLogsString 

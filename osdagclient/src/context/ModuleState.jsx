@@ -26,6 +26,7 @@ let initialValue = {
     thicknessList: [],
     propertyClassList: [],
     angleList: [],
+    topAngleList:[],
     sessionCreated: false,
     sendNextRequests: false,
     setTheCookie: false,
@@ -237,6 +238,21 @@ export const ModuleProvider = ({ children }) => {
         }
     }
 
+    const gettopAngleList = async () => {
+        console.log("top angle list opened")
+        try {
+            const response = await fetch(`${BASE_URL}populate?moduleName=${state.currentModuleName}&topAngleList=Customized`, {
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'include'
+            });
+            const jsonResponse = await response?.json()
+            dispatch({ type: 'SET_TOP_ANGLE', payload: jsonResponse })
+        } catch (error) {
+            console.log('error : ', error)
+        }
+    }
+
     const createSession = async (module_id) => {
         try {
             const requestData = { 'module_id': module_id }
@@ -267,6 +283,7 @@ export const ModuleProvider = ({ children }) => {
                 else if (module_id == 'Seated Angle Connection'){
                     getConnectivityList('Seated-Angle-Connection')
                     getCleatAngleList('Seated-Angle-Connection')
+                    gettopAngleList('Seated-Angle-Connection')
                 }
 
                 getColumnBeamMaterialList(state.currentModuleName, 'Column-Flange-Beam-Web')
@@ -564,6 +581,7 @@ export const ModuleProvider = ({ children }) => {
             thicknessList: state.thicknessList,
             propertyClassList: state.propertyClassList,
             angleList: state.angleList,
+            topAngleList:state.topAngleList,
             sessionCreated: state.sessionCreated,
             sendNextRequests: state.sendNextRequests,
             setTheCookie: state.setTheCookie,

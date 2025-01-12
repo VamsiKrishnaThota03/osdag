@@ -1,4 +1,3 @@
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -27,8 +26,7 @@ class SeatedAngleOutputData(APIView):
 
     def post(self, request):
         print("Inside post method of OutputData")
-
-        # obtaining the session, module_id, input_values
+        
         cookie_id = request.COOKIES.get('seated_angle_connection')
         module_api = get_module_api('Seated Angle Connection')
         input_values = request.data
@@ -37,6 +35,7 @@ class SeatedAngleOutputData(APIView):
             'module_id': 'Seated Angle Connection',
             'input_values': input_values
         }
+
         print('tempData : ', tempData)
         print('type of input_values : ', type(input_values))
         # obtaining the record from the Design model
@@ -117,9 +116,8 @@ class SeatedAngleOutputData(APIView):
         for item in logs : 
             print('item : ' , item)
             print('item.keys : ' , item.keys())
-            item['type'] = item['type'].upper()
             msg = item['msg']
-            finalLogsString = finalLogsString + item['type'] + " : " + msg + '\n'
+            finalLogsString = finalLogsString + msg + '\n'
 
         print('finalLogsString : ' , finalLogsString)
         return finalLogsString 

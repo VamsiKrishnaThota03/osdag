@@ -656,9 +656,12 @@ class CleatAngleConnection(ShearConnection):
             if self.connectivity in VALUES_CONN_1:
                 logger.error("Cleat Angle should have minimum thickness of {} and maximum leg length of {}."
                              .format(min_thickness,round(self.available_length,2)))
+                self.logs.append({"msg":"Cleat Angle should have minimum thickness of {} and maximum leg length of {}."
+                             .format(min_thickness,round(self.available_length,2))})
             else:
                 logger.error(
                     "Cleat Angle should have minimum thickness of %2.2f." % min_thickness)
+                self.logs.append({"msg":"Cleat Angle should have minimum thickness of %2.2f." % min_thickness})
     def member_capacity(self):
         super(CleatAngleConnection, self).member_capacity()
         self.supported_section.low_shear_capacity = round(0.6 * self.supported_section.shear_yielding_capacity, 2)
@@ -670,6 +673,7 @@ class CleatAngleConnection(ShearConnection):
                                             40.0):
                 logger.warning(" : User input for shear force is very less compared to section capacity. "
                                "Setting Shear Force value to 15% of supported beam shear capacity or 40kN, whichever is less.")
+                self.logs.append({"msg":" : User input for shear force is very less compared to section capacity. Setting Shear Force value to 15% of supported beam shear capacity or 40kN, whichever is less."})
                 self.load.shear_force = min(round(0.15 * self.supported_section.shear_yielding_capacity / 1000, 0),
                                             40.0)
 
@@ -890,9 +894,14 @@ class CleatAngleConnection(ShearConnection):
                     logger.info("{}rows {}columns {}mm diameter bolts needs leg length of {}"
                                 .format(self.sptd_leg.bolts_one_line, self.sptd_leg.bolt_line,
                                         self.bolt.bolt_diameter_provided, self.sptd_leg.length))
+                    self.logs.append({"msg":"{}rows {}columns {}mm diameter bolts needs leg length of {}"
+                                .format(self.sptd_leg.bolts_one_line, self.sptd_leg.bolt_line,
+                                        self.bolt.bolt_diameter_provided, self.sptd_leg.length)})
                     logger.info("Available width is {}".format(min(self.cleat.leg_a_length,self.available_length)))
+                    self.logs.append({"msg":"Available width is {}".format(min(self.cleat.leg_a_length,self.available_length))})
                 else:
                     logger.error(self.sptd_leg.reason)
+                    self.logs.append({"msg":"Fails in grip length on supported side."})
             elif self.spting_leg.design_status is False:
                 self.bolt_capacity_disp_sptd = round(
                     (self.bolt.bolt_capacity * self.beta_lj_sptd * self.beta_lg_sptd) / 1000, 2)
@@ -901,7 +910,9 @@ class CleatAngleConnection(ShearConnection):
                 if self.spting_leg.grip_status == False:
                     self.spting_leg.reason = "Fails in grip length on supporting side."
                 logger.error(self.spting_leg.reason)
+                self.logs.append({"msg":"Fails in grip length on supporting side."})
 
+            self.logs.append({"msg":"The connection cannot be designed with provided bolt diameters or cleat angle list"})
             logger.error("The connection cannot be designed with provided bolt diameters or cleat angle list")
         else:
             self.select_optimum()
@@ -1168,6 +1179,7 @@ class CleatAngleConnection(ShearConnection):
         self.cleat.height = max(self.spting_leg.height, self.sptd_leg.height)
         self.cleat.gap = self.sptd_leg.gap
         logger.debug("=== End Of Design ===")
+        self.logs.append({"msg":"=== End Of Design ==="})
 
     def save_design(self, popup_summary):
         super(CleatAngleConnection, self).save_design()
