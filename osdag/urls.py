@@ -16,6 +16,8 @@ from . import views
 from osdag.web_api.endplate_outputView import EndPLateOutputData
 from osdag.web_api.cleatangle_outputView import CleatAngleOutputData
 from osdag.web_api.seatedangle_outputView import SeatedAngleOutputData
+from osdag.web_api.columncoverplate_outputView import ColumnCoverPlateBoltedOutputData
+from osdag.web_api.columncoverplate_welded_outputView import ColumnCoverPlateWeldedOutputData
 # temporary
 app_name = 'osdag-web/'
 
@@ -90,6 +92,11 @@ urlpatterns = [
          CleatAngleOutputData.as_view(),name="Cleat-Angle-Connection"),
     
     path('calculate-output/Seated-Angle-Connection',
-         SeatedAngleOutputData.as_view(),name="Seated-Angle-Connection")
-
+         SeatedAngleOutputData.as_view(),name="Seated-Angle-Connection"),
+         
+    path('calculate-output/Column-Cover-Plate-Bolted',
+         ColumnCoverPlateBoltedOutputData.as_view(),name="Column-Cover-Plate-Bolted"),
+         
+    path('calculate-output/Column-Cover-Plate-Welded',
+         ColumnCoverPlateWeldedOutputData.as_view(),name="Column-Cover-Plate-Welded")
 ]

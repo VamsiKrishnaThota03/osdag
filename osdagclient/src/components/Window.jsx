@@ -230,6 +230,10 @@ const [selectedItemBack, setSelectedItemBack] = useState(null);
                                 
                                 if (selectedDesign === 'fin_plate' || selectedDesign === 'end_plate' || selectedDesign === 'cleat_angle' || selectedDesign === 'seated_angle') {
                                     navigate(`/design/${designType}/${selectedDesign}`);
+                                } else if (selectedDesign === 'cover_plate_bolted') {
+                                    navigate(`/design/${designType}/column_cover_plate_bolted`);
+                                } else if (selectedDesign === 'cover_plate_welded') {
+                                    navigate(`/design/${designType}/column_cover_plate_welded`);
                                 }                                                                  
                             }}>Start</button></div></center>
                         </>
@@ -278,7 +282,13 @@ const [selectedItemBack, setSelectedItemBack] = useState(null);
                             </div>
                             <center>
                                 <div className=''>
-                                    <button className='start-btn' onClick={() => { }}>Start</button>
+                                    <button className='start-btn' onClick={() => {
+                                        if (selectedDesign === 'cover_plate_bolted') {
+                                            navigate(`/design/${designType}/column_cover_plate_bolted`);
+                                        } else if (selectedDesign === 'cover_plate_welded') {
+                                            navigate(`/design/${designType}/column_cover_plate_welded`);
+                                        }
+                                    }}>Start</button>
                                 </div>
                             </center>
                         </>

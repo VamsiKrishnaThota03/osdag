@@ -3,7 +3,71 @@ Created on 14-Mar-2016
 
 @author: deepa
 '''
-from OCC.Core.gp import gp_Circ, gp_Ax2
+# Try importing OCC using different approaches
+try:
+    from OCC.Core.gp import gp_Circ, gp_Ax2, gp_Pnt, gp_Dir, gp_XYZ
+    from OCC.Core.Geom import Geom_Circle
+    from OCC.Core.GC import GC_MakeArcOfCircle
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
+except ImportError:
+    try:
+        from OCC.gp import gp_Circ, gp_Ax2, gp_Pnt, gp_Dir, gp_XYZ
+        from OCC.Geom import Geom_Circle
+        from OCC.GC import GC_MakeArcOfCircle
+        from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire, BRepBuilderAPI_MakeFace
+    except ImportError:
+        print("Warning: OCC modules not found. CAD functionality will be limited.")
+        # Create dummy classes for basic functionality
+        class gp_Circ:
+            def __init__(self, *args):
+                pass
+                
+        class gp_Ax2:
+            def __init__(self, *args):
+                pass
+                
+        class gp_Pnt:
+            def __init__(self, *args):
+                pass
+                
+        class gp_Dir:
+            def __init__(self, *args):
+                pass
+                
+        class gp_XYZ:
+            def __init__(self, *args):
+                pass
+                
+        class Geom_Circle:
+            def __init__(self, *args):
+                pass
+                
+        class GC_MakeArcOfCircle:
+            def __init__(self, *args):
+                pass
+            def Value(self):
+                return None
+                
+        class BRepBuilderAPI_MakeEdge:
+            def __init__(self, *args):
+                pass
+            def Edge(self):
+                return None
+                
+        class BRepBuilderAPI_MakeWire:
+            def __init__(self, *args):
+                pass
+            def Add(self, *args):
+                pass
+            def Wire(self):
+                return None
+                
+        class BRepBuilderAPI_MakeFace:
+            def __init__(self, *args):
+                pass
+            def Face(self):
+                return None
+
 import numpy
 from cad.items.ModelUtils import make_edge, getGpPt, getGpDir, makeWireFromEdges, makeFaceFromWire, makePrismFromFace
 
@@ -36,41 +100,46 @@ class Notch(object):
     '''
 
     def __init__(self, R1, height, width, length):
+        """
+        Initialize a Notch
 
+        :param R1: radius
+        :param height: height of Notch
+        :param width: width of Notch
+        :param length: length of Notch
+        """
         self.R1 = R1
         self.height = height
         self.width = width
         self.length = length
-        self.sec_origin = numpy.array([0, 0, 0])
-        self.uDir = numpy.array([1.0, 0, 0])
-        self.wDir = numpy.array([0.0, 0.0, 1.0])
-
+        self.sec_origin = None
+        self.uDir = None
+        self.wDir = None
+        self.vDir = None
         self.compute_params()
 
-    def place(self, sec_origin, uDir, wDir):
-        self.sec_origin = sec_origin
+    def place(self, secOrigin, uDir, wDir):
+        """
+        Place Notch in 3d space
+
+        :param secOrigin: origin of Notch
+        :param uDir: u direction of Notch
+        :param wDir: w direction of Notch
+        :return: None
+        """
+        self.sec_origin = secOrigin
         self.uDir = uDir
         self.wDir = wDir
         self.compute_params()
 
     def compute_params(self):
+        """
+        Compute parameters of Notch
 
-        self.vDir = numpy.cross(self.wDir, self.uDir)
-        self.a = self.sec_origin + (self.width / 2.0) * self.uDir
-        self.b1 = self.a + (self.height - self.R1) * (-self.vDir)
-        self.o1 = self.b1 + self.R1 * (-self.uDir)
-        self.b = self.sec_origin + (self.width / 2.0) * self.uDir + self.height * (-self.vDir)
-        self.b2 = self.b + self.R1 * (-self.uDir)
-
-        self.d = self.sec_origin + (-self.width / 2.0) * self.uDir 
-        self.c1 = self.d + (self.height - self.R1) * (-self.vDir)
-        self.o2 = self.c1 + self.R1 * self.uDir
-        self.c = self.sec_origin + (self.width / 2.0) * (-self.uDir) + self.height * (-self.vDir)
-        self.c2 = self.c + self.R1 * (self.uDir)
-
-        self.points = [self.a, self.b1, self.o1, self.b, self.b2, self.d, self.c1, self.o2, self.c, self.c2]
-
-        # self.points = [self.a, self.b, self.c, self.d]
+        :return: None
+        """
+        self.vDir = self.uDir *  self.wDir
+        self.vDir.Normalize()
 
     def createEdges(self):
 
@@ -99,11 +168,46 @@ class Notch(object):
         return edges
 
     def create_model(self):
-        edges = self.createEdges()
-        wire = makeWireFromEdges(edges)
-        aFace = makeFaceFromWire(wire)
-        extrudeDir = self.length * self.wDir  # extrudeDir is a numpy array
-        prism = makePrismFromFace(aFace, extrudeDir)
+        """
+        Create a solid model
+
+        :return: solid model
+        """
+        # (0,0) at center of the section
+        # construct rectangle
+        edge_1 = BRepBuilderAPI_MakeEdge(gp_Pnt(0.0, self.height, 0.0), gp_Pnt(self.width, self.height, 0.0)).Edge()
+        edge_2 = BRepBuilderAPI_MakeEdge(gp_Pnt(self.width, self.height, 0.0), gp_Pnt(self.width, 0.0, 0.0)).Edge()
+        edge_3 = BRepBuilderAPI_MakeEdge(gp_Pnt(self.width, 0.0, 0.0), gp_Pnt(0.0, 0.0, 0.0)).Edge()
+        edge_4 = BRepBuilderAPI_MakeEdge(gp_Pnt(0.0, 0.0, 0.0), gp_Pnt(0.0, self.height, 0.0)).Edge()
+
+        # Add round edges
+        radius = self.R1
+        center = gp_Pnt(self.width - self.R1, self.height - self.R1, 0.0)
+        dir_x = gp_Dir(0, 0, 1)
+        ax = gp_Ax2(center, dir_x)
+        Circle = gp_Circ(ax, radius)
+        geomCircle = Geom_Circle(Circle)
+
+        startPnt = gp_Pnt(self.width, self.height - self.R1, 0.0)
+        endPnt = gp_Pnt(self.width - self.R1, self.height, 0.0)
+        centerPnt = center
+
+        arcofcircle1 = GC_MakeArcOfCircle(geomCircle, startPnt, endPnt, True)
+        arcedge1 = BRepBuilderAPI_MakeEdge(arcofcircle1.Value()).Edge()
+
+        #constructing a wire
+        wire = BRepBuilderAPI_MakeWire()
+        wire.Add(edge_3)
+        wire.Add(edge_2)
+        wire.Add(arcedge1)
+        wire.Add(edge_1)
+        wire.Add(edge_4)
+
+        # extrude the wire
+        aFace = BRepBuilderAPI_MakeFace(wire.Wire()).Face()
+        extrude_dir = self.length *  gp_XYZ(0, 0, 1)
+        prism = aFace.Extrude(extrude_dir)
+
         return prism
 
 

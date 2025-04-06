@@ -1,23 +1,155 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { ModuleContext } from '../context/ModuleState'
-import { Input, Select } from 'antd'
+import { Input, Select, Modal, Table } from 'antd'
 import ISection from '../assets/ISection.png'
 import CustomSectionModal from './CustomSectionModal'
+import axios from 'axios'
+import Variable from '../Variable'
 
 const readOnlyFontStyle = {
     color: 'rgb(0 0 0 / 67%)', fontSize: '12px', fontWeight: '600'
 }
 
-const ColumnSectionModal = ({ supportingSectionData, designPrefInputs, setDesignPrefInputs }) => {
+// Base API URL
+const baseUrl = Variable.API_URL;
+
+const ColumnSectionModal = (props) => {
+    // Support for both old and new interface patterns
+    const {
+        // Old interface
+        supportingSectionData, 
+        designPrefInputs, 
+        setDesignPrefInputs,
+        // New interface
+        visible = false,
+        onCancel,
+        onOk,
+        onSelectSection,
+        resetFlag
+    } = props;
 
     const { materialList, updateSourceAndMechType, getMaterialDetails, supporting_material_details } = useContext(ModuleContext)
-    const [showModal, setShowModal] = useState(false)
+    const [showModal, setShowModal] = useState(false);
+    const [sections, setSections] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [selectedSection, setSelectedSection] = useState(null);
 
     useEffect(() => {
-        const material = materialList.filter(value => value.Grade === designPrefInputs.supporting_material)
-        getMaterialDetails({data: material[0], type: "supporting"})
-    }, [])
+        if (visible) {
+            fetchSections();
+        }
+    }, [visible]);
 
+    useEffect(() => {
+        if (designPrefInputs && materialList.length > 0) {
+            const material = materialList.filter(value => value.Grade === designPrefInputs.supporting_material);
+            if (material && material.length > 0) {
+                getMaterialDetails({data: material[0], type: "supporting"});
+            }
+        }
+    }, [designPrefInputs, materialList]);
+
+    const fetchSections = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`${baseUrl}/sections/columns`);
+            if (response.data && response.data.length > 0) {
+                setSections(response.data);
+            }
+        } catch (error) {
+            console.error('Error fetching column sections:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRowSelection = (record) => {
+        setSelectedSection(record.Designation);
+    };
+
+    const handleOk = () => {
+        if (onSelectSection && selectedSection) {
+            onSelectSection(selectedSection);
+        } else if (onOk && selectedSection) {
+            onOk(selectedSection);
+        }
+    };
+
+    // New interface for Column Cover Plate components
+    if (visible !== undefined) {
+        const columns = [
+            {
+                title: 'Designation',
+                dataIndex: 'Designation',
+                key: 'Designation',
+                sorter: (a, b) => {
+                    return a.Designation.localeCompare(b.Designation);
+                }
+            },
+            {
+                title: 'Mass (kg/m)',
+                dataIndex: 'Mass',
+                key: 'Mass',
+                sorter: (a, b) => a.Mass - b.Mass
+            },
+            {
+                title: 'Depth (mm)',
+                dataIndex: 'D',
+                key: 'D',
+                sorter: (a, b) => a.D - b.D
+            },
+            {
+                title: 'Flange Width (mm)',
+                dataIndex: 'B',
+                key: 'B',
+                sorter: (a, b) => a.B - b.B
+            },
+            {
+                title: 'Web Thickness (mm)',
+                dataIndex: 'tw',
+                key: 'tw',
+                sorter: (a, b) => a.tw - b.tw
+            },
+            {
+                title: 'Flange Thickness (mm)',
+                dataIndex: 'T',
+                key: 'T',
+                sorter: (a, b) => a.T - b.T
+            }
+        ];
+
+        return (
+            <Modal
+                title="Select Column Section"
+                visible={visible}
+                onCancel={onCancel}
+                onOk={handleOk}
+                width={800}
+                okButtonProps={{ disabled: !selectedSection }}
+            >
+                <div className="section-selection-container">
+                    <Table
+                        columns={columns}
+                        dataSource={sections}
+                        rowKey="Designation"
+                        loading={loading}
+                        pagination={{ pageSize: 10 }}
+                        size="small"
+                        scroll={{ y: 300 }}
+                        onRow={(record) => ({
+                            onClick: () => handleRowSelection(record),
+                            style: { 
+                                cursor: 'pointer',
+                                background: selectedSection === record.Designation ? '#e6f7ff' : 'inherit' 
+                            }
+                        })}
+                    />
+                </div>
+            </Modal>
+        );
+    }
+
+    // Old interface implementation
     return (
         <>
             <div className='col-beam-cont'>
@@ -378,4 +510,4 @@ const ColumnSectionModal = ({ supportingSectionData, designPrefInputs, setDesign
     )
 }
 
-export default ColumnSectionModal
+export default ColumnSectionModal;

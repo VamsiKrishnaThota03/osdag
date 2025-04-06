@@ -810,3 +810,167 @@
   color : #91b014;
   font-size: '16px';
 }
+
+/* Column Cover Plate Bolted Component Styles */
+.section-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 5px;
+}
+
+.section-component {
+  margin-bottom: 20px;
+}
+
+.section {
+  margin-bottom: 15px;
+}
+
+.section-label {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.reset-btn, .design-btn {
+  min-width: 80px;
+}
+
+.output-container {
+  padding: 10px;
+}
+
+.output-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.output-section-header {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 15px 0 10px 0;
+  color: #1890ff;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 5px;
+}
+
+.output-field {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.output-label {
+  width: 140px;
+  font-weight: 500;
+}
+
+.output-value {
+  font-weight: normal;
+}
+
+.output-buttons {
+  display: flex;
+  gap: 10px;
+  margin: 5px 0 15px 0;
+}
+
+.output-button {
+  min-width: 160px;
+}
+
+.view-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.view-buttons, .axis-toggles, .model-toggles {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.view-btn {
+  min-width: 80px;
+}
+
+.viewer-container {
+  width: 100%;
+  height: 400px;
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.log-console {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #000;
+  color: #fff;
+  height: 100px;
+  overflow-y: auto;
+  border-radius: 4px;
+}
+
+.no-output-message {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+.warning-message {
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+.bottom-action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.report-btn, .save-btn {
+  min-width: 160px;
+}
+
+/* Add these styles to support the single-column layout */
+
+.single-column-input {
+  padding: 10px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.input-section {
+  margin-bottom: 20px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fafafa;
+}
+
+/* Make headers more prominent */
+.section-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e8e8e8;
+  padding-bottom: 8px;
+}

@@ -19,7 +19,6 @@ from osdag.models import Design
 from django.utils.crypto import get_random_string
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from osdag_api import developed_modules
 import typing
 from django.http import JsonResponse
 
@@ -29,6 +28,10 @@ from rest_framework import status
 
 # importing serializers 
 from osdag.serializers import Design_Serializer
+
+# Import common definitions
+from osdag_api.common_defs import developed_modules
+from osdag_api import CAD_FUNCTIONALITY_AVAILABLE
 
 # Author: Aaranyak Ghosh
 
@@ -79,6 +82,9 @@ class CreateSession(APIView):
             if request.COOKIES.get(session_key):
                 return Response({"status": "set"}, status=status.HTTP_200_OK)
 
+        # Show warning if CAD functionality is not available
+        if not CAD_FUNCTIONALITY_AVAILABLE:
+            print(f"Warning: CAD functionality is limited. Session for {module_id} will be created but some features may not work.")
 
         cookie_id = get_random_string(length=32) # creting a session from a random string
         print('cookie id in session : ' ,cookie_id)

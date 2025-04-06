@@ -3,9 +3,16 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.utils.crypto import get_random_string
 from django.http import FileResponse
+from django.http import JsonResponse
 
-from osdag_api.modules.fin_plate_connection import create_from_input as fin_plate_create_from_input
-from osdag_api.modules.end_plate_connection import create_from_input as end_plate_create_from_input
+# Import CAD availability flag
+from osdag_api import CAD_FUNCTIONALITY_AVAILABLE
+
+# Don't directly import modules that depend on OCC
+# We'll import these conditionally inside methods
+# from osdag_api.modules.fin_plate_connection import create_from_input as fin_plate_create_from_input
+# from osdag_api.modules.end_plate_connection import create_from_input as end_plate_create_from_input
+
 # importing models
 from osdag.models import Design
 
@@ -28,6 +35,13 @@ import uuid
 class CreateDesignReport(APIView):
 
     def post(self, request):
+        # Check if CAD functionality is available
+        if not CAD_FUNCTIONALITY_AVAILABLE:
+            return JsonResponse({
+                "success": False,
+                "message": "CAD functionality is disabled. Cannot generate design report. The OCC module is missing."
+            }, status=400)
+            
         # print('request.metadata : ' , request.data)
         # metadata = request.data
         # obtain teh cookies
@@ -54,7 +68,7 @@ class CreateDesignReport(APIView):
         print('logs type ; ', type(logs))
         print('design_status : ' , design_status )
 
-        if (metadata is None or metadata is ''):
+        if (metadata is None or metadata == ''):
             print('The metadata is None ')
             print('Setting the default metadata values')
             metadata_profile = {
@@ -105,24 +119,46 @@ class CreateDesignReport(APIView):
             os.mkdir(cwd) 
 
         try:
-            print('creating module from input')
-            if(request.COOKIES.get('end_plate_connection_session')):
-               module=end_plate_create_from_input(input_values)
+            # Conditionally import modules here
+            if request.COOKIES.get('end_plate_connection_session'):
+                # Import only if needed
+                from osdag_api.modules.end_plate_connection import create_from_input as end_plate_create_from_input
+                module = end_plate_create_from_input(input_values)
             else:
-              module=fin_plate_create_from_input(input_values)
+                # Import only if needed
+                from osdag_api.modules.fin_plate_connection import create_from_input as fin_plate_create_from_input
+                module = fin_plate_create_from_input(input_values)
+        except ModuleNotFoundError as e:
+            if "OCC" in str(e):
+                return JsonResponse({
+                    "success": False,
+                    "message": "CAD functionality is disabled. Cannot generate design report. The OCC module is missing."
+                }, status=400)
+            else:
+                print('Module error: ', e)
+                return JsonResponse({
+                    "success": False,
+                    "message": f"Error creating module: {str(e)}"
+                }, status=400)
         except Exception as e:
             print('e : ', e)
+            return JsonResponse({
+                "success": False,
+                "message": f"Error creating module: {str(e)}"
+            }, status=400)
 
         try:
             print('generating the report .save_design')
             resultBoolean = module.save_design(metadata_final)
         except Exception as e:
             print('e : ', e)
+            return JsonResponse({
+                "success": False,
+                "message": f"Error generating report: {str(e)}"
+            }, status=400)
         
         if(resultBoolean):
             print('The LaTEX file has been created successfully')
-
-
         
         os.chdir(current_directory)
         print('cwd after chdir : ' , os.getcwd())
@@ -146,6 +182,13 @@ class CreateDesignReport(APIView):
 class GetPDF(APIView):
 
     def get(self, request):
+        # Check if CAD functionality is available
+        if not CAD_FUNCTIONALITY_AVAILABLE:
+            return JsonResponse({
+                "success": False,
+                "message": "CAD functionality is disabled. Cannot generate PDF. The OCC module is missing."
+            }, status=400)
+            
         print('Inside get PDF')
 
         # check cookie

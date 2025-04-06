@@ -1,4 +1,3 @@
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,9 +5,11 @@ from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
-from osdag_api import get_module_api
+from osdag_api import get_module_api, CAD_FUNCTIONALITY_AVAILABLE
 from django.http import HttpResponse, HttpRequest
-from osdag_api.modules.fin_plate_connection import *
+
+# Don't import directly from modules that require OCC
+# from osdag_api.modules.fin_plate_connection import *
 
 # importing from DRF
 from rest_framework.response import Response
@@ -60,6 +61,15 @@ class CleatAngleOutputData(APIView):
 
     def post(self, request):
         print("Inside post method of OutputData")
+
+        # Check if CAD functionality is available
+        if not CAD_FUNCTIONALITY_AVAILABLE:
+            print("Warning: CAD functionality is disabled. Cannot generate output.")
+            return JsonResponse({
+                "data": {},
+                "logs": [{"type": "ERROR", "msg": "CAD functionality is disabled. The OCC module is missing."}],
+                "success": False
+            }, safe=False, status=400)
 
         # obtaining the session, module_id, input_values
         cookie_id = request.COOKIES.get('cleat_angle_connection_session')
@@ -124,7 +134,7 @@ class CleatAngleOutputData(APIView):
             output_result = self.check_non_zero_output(output)
             print('output_result : ' , output_result)
 
-            if(output is "" or output is 0 or output_result is False) :
+            if output == "" or output == 0 or output_result is False:
                 print('output is empty string or output_result is False')
                 print('output : ' , output)
                 designObject.design_status = False
