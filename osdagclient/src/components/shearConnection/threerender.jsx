@@ -43,7 +43,7 @@ const FallbackModel = () => {
   );
 };
 
-function Model({ hasOutput = false }) {
+function Model({ hasOutput = false, showMessage = true }) {
   const [hasError, setHasError] = useState(false);
   const [obj, setObj] = useState(null);
 
@@ -98,23 +98,25 @@ function Model({ hasOutput = false }) {
     tryNextPath(0);
   }, [hasOutput]);
 
-  // If no output is available, show a message
+  // If no output is available, show a message or just the axes
   if (!hasOutput) {
     return (
       <group>
         <axesHelper args={[200]}/>
-        <Html position={[0, 0, 0]}>
-          <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.8)', 
-            padding: '10px', 
-            borderRadius: '5px',
-            width: '200px',
-            textAlign: 'center'
-          }}>
-            No design output available yet.<br/>
-            Click the Design button to generate a 3D model.
-          </div>
-        </Html>
+        {showMessage && window.location.pathname.includes('ColumnCoverPlateBolted') && !window.location.pathname.includes('DesignPreferences') && (
+          <Html position={[0, 0, 0]}>
+            <div style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+              padding: '10px', 
+              borderRadius: '5px',
+              width: '200px',
+              textAlign: 'center'
+            }}>
+              No design output available yet.<br/>
+              Click the Design button to generate a 3D model.
+            </div>
+          </Html>
+        )}
         <OrbitControls />
       </group>
     );
@@ -200,8 +202,8 @@ function Model({ hasOutput = false }) {
   );
 }
 
-// Update ThreeRender to pass hasOutput to Model
-const ThreeRender = ({ resetFlag, hasOutput = false }) => {
+// Update ThreeRender to pass showMessage to Model
+const ThreeRender = ({ resetFlag, hasOutput = false, showMessage = true }) => {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Canvas style={{ background: '#f0f0f0' }}>
@@ -221,7 +223,7 @@ const ThreeRender = ({ resetFlag, hasOutput = false }) => {
             </div>
           </Html>
         }>
-          <Model hasOutput={hasOutput} />
+          <Model hasOutput={hasOutput} showMessage={showMessage} />
         </Suspense>
       </Canvas>
     </div>

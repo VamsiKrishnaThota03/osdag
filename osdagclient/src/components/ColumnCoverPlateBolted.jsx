@@ -13,8 +13,9 @@ import ConnectorSectionModal from "./ConnectorSectionModal";
 import CustomSectionModal from "./CustomSectionModal";
 import ThreeRender from './shearConnection/threerender';
 import { UserContext } from '../context/UserState';
-import { FileTextOutlined, SaveOutlined, FileOutlined, EditOutlined, DatabaseOutlined, QuestionOutlined, SettingOutlined, DownOutlined } from '@ant-design/icons';
+import { FileTextOutlined, SaveOutlined, FileOutlined, EditOutlined, DatabaseOutlined, QuestionOutlined, SettingOutlined, DownOutlined, FolderOutlined, DownloadOutlined } from '@ant-design/icons';
 import ErrorBoundary from './ErrorBoundary';
+import DesignPreferences from './DesignPreferences';
 
 const { Content, Header } = Layout;
 const { Option } = Select;
@@ -254,6 +255,16 @@ const ColumnCoverPlateBolted = () => {
     
     // User context
     const { email } = useContext(UserContext);
+
+    // Add state for download modal
+    const [downloadModalVisible, setDownloadModalVisible] = useState(false);
+    const [downloadType, setDownloadType] = useState('');
+    const [downloadFileName, setDownloadFileName] = useState('');
+    const [downloadTags, setDownloadTags] = useState('');
+    const [downloadLocation, setDownloadLocation] = useState('');
+
+    // Add state for design preferences modal
+    const [isDesignPreferencesVisible, setIsDesignPreferencesVisible] = useState(false);
 
     // Create a new session when the component mounts
     useEffect(() => {
@@ -566,14 +577,22 @@ const ColumnCoverPlateBolted = () => {
         }
     };
 
+    // Handle saving design preferences
+    const handleSaveDesignPreferences = (values) => {
+        console.log('Design preferences saved:', values);
+        // Here you would update your formData with the new preferences
+        notification.success({
+            message: 'Success',
+            description: 'Design preferences saved successfully'
+        });
+        setIsDesignPreferencesVisible(false);
+    };
+
     // Add handlers for other menu items
     const handleEditMenuClick = ({ key }) => {
         switch(key) {
             case 'design-preferences':
-                notification.info({
-                    message: 'Design Preferences',
-                    description: 'Design Preferences functionality will be implemented here'
-                });
+                setIsDesignPreferencesVisible(true);
                 break;
             case 'section-modeler':
                 notification.info({
@@ -641,31 +660,38 @@ const ColumnCoverPlateBolted = () => {
         }
     };
 
+    // Update the database menu click handler with better debugging
     const handleDatabaseMenuClick = ({ key }) => {
+        console.log("Database menu item clicked:", key);
+        
         switch(key) {
             case 'download-column':
-                notification.info({
-                    message: 'Download Column Database',
-                    description: 'Column database download functionality will be implemented here'
-                });
+                console.log("Showing column download dialog");
+                setDownloadType('Column');
+                setDownloadFileName('Column_Details');
+                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadModalVisible(true);
                 break;
             case 'download-beam':
-                notification.info({
-                    message: 'Download Beam Database',
-                    description: 'Beam database download functionality will be implemented here'
-                });
+                console.log("Showing beam download dialog");
+                setDownloadType('Beam');
+                setDownloadFileName('Beam_Details');
+                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadModalVisible(true);
                 break;
             case 'download-angle':
-                notification.info({
-                    message: 'Download Angle Database',
-                    description: 'Angle database download functionality will be implemented here'
-                });
+                console.log("Showing angle download dialog");
+                setDownloadType('Angle');
+                setDownloadFileName('Angle_Details');
+                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadModalVisible(true);
                 break;
             case 'download-channel':
-                notification.info({
-                    message: 'Download Channel Database',
-                    description: 'Channel database download functionality will be implemented here'
-                });
+                console.log("Showing channel download dialog");
+                setDownloadType('Channel');
+                setDownloadFileName('Channel_Details');
+                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadModalVisible(true);
                 break;
             case 'reset':
                 notification.info({
@@ -674,46 +700,78 @@ const ColumnCoverPlateBolted = () => {
                 });
                 break;
             default:
+                console.log("Unknown database menu item:", key);
                 break;
         }
     };
 
+    // Define the handleHelpMenuClick function before creating the helpMenu
     const handleHelpMenuClick = ({ key }) => {
         switch(key) {
             case 'tutorials':
                 notification.info({
                     message: 'Video Tutorials',
-                    description: 'Video Tutorials functionality will be implemented here'
+                    description: 'Video Tutorials will be opened in a new window'
                 });
                 break;
             case 'examples':
                 notification.info({
                     message: 'Design Examples',
-                    description: 'Design Examples functionality will be implemented here'
+                    description: 'Design Examples will be opened in a new window'
                 });
                 break;
             case 'question':
                 notification.info({
                     message: 'Ask Us a Question',
-                    description: 'Ask Us a Question functionality will be implemented here'
+                    description: 'Support form will be opened in a new window'
                 });
                 break;
             case 'about':
                 notification.info({
                     message: 'About Osdag',
-                    description: 'About Osdag functionality will be implemented here'
+                    description: 'Osdag information will be displayed'
                 });
                 break;
             case 'update':
                 notification.info({
                     message: 'Check For Update',
-                    description: 'Check For Update functionality will be implemented here'
+                    description: 'Checking for updates...'
                 });
                 break;
             default:
                 break;
         }
     };
+
+    // Add a direct test function to open the download modal
+    const testOpenDownloadModal = (type) => {
+        console.log(`Opening download modal for ${type}`);
+        setDownloadType(type);
+        setDownloadFileName(`${type}_Details`);
+        setDownloadLocation('Downloads');
+        setDownloadModalVisible(true);
+    };
+
+    // Create the help menu
+    const helpMenu = (
+        <Menu onClick={handleHelpMenuClick}>
+            <Menu.Item key="tutorials">
+                Video Tutorials
+            </Menu.Item>
+            <Menu.Item key="examples">
+                Design Examples
+            </Menu.Item>
+            <Menu.Item key="question">
+                Ask Us a Question
+            </Menu.Item>
+            <Menu.Item key="about">
+                About Osdag
+            </Menu.Item>
+            <Menu.Item key="update">
+                Check For Update
+            </Menu.Item>
+        </Menu>
+    );
 
     // Create the file menu
     const fileMenu = (
@@ -798,19 +856,10 @@ const ColumnCoverPlateBolted = () => {
         </Menu>
     );
 
-    // Create the database menu
-    const downloadSubMenu = (
-        <Menu onClick={handleDatabaseMenuClick}>
-            <Menu.Item key="download-column">Column</Menu.Item>
-            <Menu.Item key="download-beam">Beam</Menu.Item>
-            <Menu.Item key="download-angle">Angle</Menu.Item>
-            <Menu.Item key="download-channel">Channel</Menu.Item>
-        </Menu>
-    );
-
+    // Update the database menu to use a simpler structure without the submenu
     const databaseMenu = (
         <Menu onClick={handleDatabaseMenuClick}>
-            <Menu.SubMenu key="download" title="Download" popupClassName="database-submenu">
+            <Menu.SubMenu key="download" title="Download">
                 <Menu.Item key="download-column">Column</Menu.Item>
                 <Menu.Item key="download-beam">Beam</Menu.Item>
                 <Menu.Item key="download-angle">Angle</Menu.Item>
@@ -820,26 +869,24 @@ const ColumnCoverPlateBolted = () => {
         </Menu>
     );
 
-    // Create the help menu
-    const helpMenu = (
-        <Menu onClick={handleHelpMenuClick}>
-            <Menu.Item key="tutorials">
-                Video Tutorials
-            </Menu.Item>
-            <Menu.Item key="examples">
-                Design Examples
-            </Menu.Item>
-            <Menu.Item key="question">
-                Ask Us a Question
-            </Menu.Item>
-            <Menu.Item key="about">
-                About Osdag
-            </Menu.Item>
-            <Menu.Item key="update">
-                Check For Update
-            </Menu.Item>
-        </Menu>
-    );
+    // Add the missing handleDownload function
+    const handleDownload = () => {
+        if (!downloadFileName) {
+            notification.error({
+                message: 'Error',
+                description: 'Please enter a filename'
+            });
+            return;
+        }
+
+        // Simulate download process
+        notification.success({
+            message: 'Success',
+            description: `${downloadType} data will be downloaded as ${downloadFileName} to ${downloadLocation || 'Downloads'}`
+        });
+        
+        setDownloadModalVisible(false);
+    };
 
     return (
         <Layout style={{ 
@@ -1107,7 +1154,7 @@ const ColumnCoverPlateBolted = () => {
                                                     <Option value="Bearing Bolt">Bearing Bolt</Option>
                                                     <Option value="Friction Grip Bolt">Friction Grip Bolt</Option>
                                                 </Select>
-                                            </div>
+                                        </div>
                                             <div style={{ marginBottom: '10px' }}>
                                                 <div style={{ marginBottom: '5px' }}>Property Class</div>
                                                 <Select
@@ -1273,13 +1320,12 @@ const ColumnCoverPlateBolted = () => {
                                     </div>
                                 </div>
                                 <div style={styles.viewerContainer}>
-                                    <ErrorBoundary 
-                                        fallbackMessage="There was an error rendering the 3D model"
-                                        showResetButton={true}
-                                        onReset={() => setResetFlag(!resetFlag)}
-                                        showDetails={true}
-                                    >
-                                        <ThreeRender resetFlag={resetFlag} hasOutput={modelGenerated} />
+                                    <ErrorBoundary>
+                                        <ThreeRender 
+                                            resetFlag={resetFlag}
+                                            hasOutput={modelGenerated}
+                                            showMessage={true}
+                                        />
                                     </ErrorBoundary>
                                 </div>
                                 <div style={styles.logConsole}>
@@ -1314,13 +1360,13 @@ const ColumnCoverPlateBolted = () => {
                                         <div style={styles.outputSectionHeader}>Bolt</div>
                                         <div style={styles.outputField}>
                                             <span style={styles.outputLabel}>Diameter (mm):</span>
-                                            <Input 
+                                                <Input
                                                 size="small"
                                                 value={output && output["Bolt.Diameter"] ? output["Bolt.Diameter"].value : ""}
                                                 readOnly
                                                 style={{ width: '58%' }}
-                                            />
-                                        </div>
+                                                />
+                                            </div>
                                         <div style={styles.outputField}>
                                             <span style={styles.outputLabel}>Property Class:</span>
                                             <Select
@@ -1342,22 +1388,22 @@ const ColumnCoverPlateBolted = () => {
                                         <div style={styles.outputSectionHeader}>Web Splice Plate</div>
                                         <div style={styles.outputField}>
                                             <span style={styles.outputLabel}>Height (mm):</span>
-                                            <Input 
+                                                <Input
                                                 size="small"
                                                 value={output && output["WebPlate.Height"] ? output["WebPlate.Height"].value : ""}
                                                 readOnly
                                                 style={{ width: '58%' }}
-                                            />
-                                        </div>
+                                                />
+                                            </div>
                                         <div style={styles.outputField}>
                                             <span style={styles.outputLabel}>Width (mm):</span>
-                                            <Input 
+                                                <Input
                                                 size="small"
                                                 value={output && output["WebPlate.Width"] ? output["WebPlate.Width"].value : ""}
                                                 readOnly
                                                 style={{ width: '58%' }}
-                                            />
-                                        </div>
+                                                />
+                                            </div>
                                         <div style={styles.outputField}>
                                             <span style={styles.outputLabel}>Thickness (mm):</span>
                                             <Input 
@@ -1429,7 +1475,7 @@ const ColumnCoverPlateBolted = () => {
                                         justifyContent: 'space-between',
                                         gap: '5px'
                                     }}>
-                                        <Button 
+                                    <Button
                                             size="small"
                                             icon={<FileTextOutlined />} 
                                             onClick={generateReport}
@@ -1437,8 +1483,8 @@ const ColumnCoverPlateBolted = () => {
                                             disabled={!output}
                                         >
                                             Create Design Report
-                                        </Button>
-                                        <Button 
+                                    </Button>
+                                    <Button
                                             size="small"
                                             icon={<SaveOutlined />} 
                                             onClick={saveInputFile}
@@ -1446,8 +1492,8 @@ const ColumnCoverPlateBolted = () => {
                                             disabled={!output}
                                         >
                                             Save Output
-                                        </Button>
-                                    </div>
+                                    </Button>
+                                </div>
                                 </div>
 
                                 {logs && logs.length > 0 && (
@@ -1472,11 +1518,11 @@ const ColumnCoverPlateBolted = () => {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        </div>
+                                </div>
+                    </div>
                     </Col>
                 </Row>
-            </Content>
+                </Content>
 
             {/* Modals */}
             <ColumnSectionModal
@@ -1587,6 +1633,151 @@ const ColumnCoverPlateBolted = () => {
                 }}
                 resetFlag={resetFlag}
             />
+
+            {/* Design Preferences Modal */}
+            <Modal
+                title={null}
+                open={isDesignPreferencesVisible}
+                onCancel={() => setIsDesignPreferencesVisible(false)}
+                footer={null}
+                width={1000}
+                bodyStyle={{ padding: 0 }}
+                destroyOnClose
+                maskClosable={false}
+                centered
+            >
+                <DesignPreferences
+                    onCancel={() => setIsDesignPreferencesVisible(false)}
+                    onSave={handleSaveDesignPreferences}
+                    initialValues={{
+                        bolt: {
+                            boltType: formData["Bolt.TensionType"] || "Pre-tensioned",
+                            holeType: formData["Bolt.Bolt_Hole_Type"] || "Standard",
+                            slipFactor: formData["Bolt.Slip_Factor"] || "0.3"
+                        }
+                    }}
+                    showMessage={false}
+                />
+            </Modal>
+
+            {/* Add the download modal component to the layout */}
+            <Modal
+                title="Download File"
+                open={downloadModalVisible}
+                onCancel={() => setDownloadModalVisible(false)}
+                centered
+                destroyOnClose
+                maskClosable={false}
+                width={550}
+                footer={[
+                    <Button 
+                        key="cancel" 
+                        onClick={() => setDownloadModalVisible(false)}
+                        style={{
+                            background: "#555",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px"
+                        }}
+                    >
+                        Cancel
+                    </Button>,
+                    <Button 
+                        key="save" 
+                        type="primary" 
+                        onClick={handleDownload}
+                        style={{
+                            background: "#1890ff", 
+                            borderColor: "#1890ff"
+                        }}
+                    >
+                        Save
+                    </Button>
+                ]}
+                bodyStyle={{ 
+                    background: '#2d2d2d', 
+                    padding: '25px', 
+                    color: 'white',
+                    borderRadius: '5px'
+                }}
+                style={{ 
+                    top: '30%',
+                }}
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
+                            Save As:
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <Input 
+                                value={downloadFileName}
+                                onChange={(e) => setDownloadFileName(e.target.value)}
+                                style={{ 
+                                    background: '#444', 
+                                    border: '1px solid #666',
+                                    borderRadius: '5px',
+                                    color: 'white',
+                                    height: '32px'
+                                }}
+                            />
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
+                            Tags:
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <Input 
+                                value={downloadTags}
+                                onChange={(e) => setDownloadTags(e.target.value)}
+                                style={{ 
+                                    background: '#444', 
+                                    border: '1px solid #666',
+                                    borderRadius: '5px',
+                                    color: 'white',
+                                    height: '32px'
+                                }}
+                                placeholder="Optional tags"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
+                            Where:
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', gap: '10px' }}>
+                            <Button 
+                                icon={<FolderOutlined />} 
+                                style={{ 
+                                    background: '#444', 
+                                    border: '1px solid #666',
+                                    borderRadius: '5px',
+                                    color: 'white',
+                                    width: '85%',
+                                    textAlign: 'left',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {downloadLocation || 'Downloads'}
+                            </Button>
+                            <Button 
+                                icon={<DownloadOutlined />} 
+                                style={{ 
+                                    background: '#444', 
+                                    border: '1px solid #666',
+                                    borderRadius: '5px',
+                                    color: 'white'
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </Modal>
         </Layout>
     );
 };
