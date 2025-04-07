@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import Variable from '../Variable';
-import { Table, Modal, Button, Layout, Menu, Select, Radio, Input, Space, Divider, Dropdown, notification, Checkbox, Row, Col } from 'antd';
+import { Table, Modal, Button, Layout, Menu, Select, Radio, Input, Space, Divider, Dropdown, notification, Checkbox, Row, Col, ConfigProvider, theme } from 'antd';
 import ColumnSectionModal from './ColumnSectionModal';
 import BoltSectionModal from './BoltSectionModal';
 import WeldSectionModal from './WeldSectionModal';
@@ -27,29 +27,43 @@ const styles = {
         display: 'flex', 
         flexDirection: 'column',
         overflow: 'hidden',
-        width: '100%'
+        width: '100%',
+        backgroundColor: '#141414',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
     },
     header: { 
         height: '40px', 
         lineHeight: '40px', 
         padding: '0 20px', 
-        background: '#001529',
-        width: '100%'
+        background: '#1f1f1f',
+        width: '100%',
+        color: '#fff',
+        flexShrink: 0
     },
     title: { 
         textAlign: 'center', 
         padding: '5px 0', 
         fontSize: '18px', 
         fontWeight: 'bold',
-        borderBottom: '1px solid #ddd',
-        width: '100%'
+        borderBottom: '1px solid #303030',
+        width: '100%',
+        color: '#fff',
+        flexShrink: 0,
+        height: '35px'
     },
     mainContent: { 
         flex: 1, 
         padding: '5px', 
         overflow: 'hidden',
         display: 'flex',
-        width: '100%'
+        width: '100%',
+        backgroundColor: '#141414',
+        minHeight: 0,
+        height: 'calc(100vh - 80px)'  // Subtract header and title height
     },
     column: {
         height: '100%',
@@ -58,51 +72,68 @@ const styles = {
     },
     contentSection: {
         height: '100%', 
-        border: '1px solid #ddd', 
+        border: '1px solid #303030',
         borderRadius: '4px', 
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        backgroundColor: '#1f1f1f',
+        overflow: 'hidden',
+        flex: 1
     },
     sectionTitle: {
         padding: '8px', 
-        borderBottom: '1px solid #ddd', 
-        background: '#f5f5f5', 
+        borderBottom: '1px solid #303030',
+        background: '#141414',
         fontWeight: 'bold',
-        fontSize: '14px'
+        fontSize: '14px',
+        color: '#fff',
+        flexShrink: 0
     },
     sectionContent: {
-        padding: '8px',
         flex: 1,
-        overflow: 'auto'
+        overflow: 'auto',
+        backgroundColor: '#1f1f1f',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%'
     },
     viewerContainer: {
         flex: 1,
         minHeight: '280px',
-        position: 'relative'
+        position: 'relative',
+        backgroundColor: '#141414'  // Dark background for viewer
     },
     logConsole: {
         marginTop: '5px', 
         maxHeight: '80px', 
         overflow: 'auto', 
-        border: '1px solid #ddd', 
-        padding: '3px'
+        border: '1px solid #303030',  // Darker border
+        padding: '3px',
+        backgroundColor: '#1f1f1f',  // Darker console background
+        color: '#fff'  // White text
     },
     actionButtons: {
+        padding: '15px',
         display: 'flex',
-        justifyContent: 'space-between',
-        marginTop: '20px'
+        flexDirection: 'column',
+        gap: '8px',
+        backgroundColor: '#1f1f1f',
+        borderTop: '1px solid #303030'
     },
     inputSection: {
         marginBottom: '15px',
-        border: '1px solid #f0f0f0',
+        border: '1px solid #303030',  // Darker border
         borderRadius: '4px',
-        padding: '10px'
+        padding: '10px',
+        backgroundColor: '#1f1f1f'  // Darker section background
     },
     sectionHeader: {
         fontWeight: 'bold',
-        borderBottom: '1px solid #f0f0f0',
+        borderBottom: '1px solid #303030',  // Darker border
         marginBottom: '10px',
-        paddingBottom: '5px'
+        paddingBottom: '5px',
+        color: '#fff'  // White text
     },
     sectionComponent: {
         display: 'flex',
@@ -116,41 +147,49 @@ const styles = {
         marginBottom: '5px'
     },
     outputContainer: {
-        padding: '2px'
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#1f1f1f',
+        minHeight: 0,
+        overflow: 'hidden'
     },
     outputSection: {
-        marginBottom: '10px'
+        flex: 1,
+        overflowY: 'auto',
+        padding: '15px',
+        minHeight: 0,
+        backgroundColor: '#1f1f1f'
     },
     outputSectionHeader: {
-        fontWeight: 'bold',
-        borderBottom: '1px solid #f0f0f0',
-        marginBottom: '5px',
-        paddingBottom: '3px',
-        marginTop: '10px',
-        fontSize: '14px'
+        color: '#fff',
+        fontSize: '14px',
+        fontWeight: 'normal',
+        marginBottom: '8px'
     },
     outputField: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '3px 0',
-        borderBottom: '1px dashed #f0f0f0'
+        marginBottom: '10px'
     },
     outputLabel: {
-        fontWeight: '500',
-        fontSize: '13px',
-        whiteSpace: 'nowrap',
-        marginRight: '5px'
+        color: '#fff',
+        fontSize: '14px',
+        marginBottom: '5px'
     },
     outputValue: {
-        // Added to ensure text values are visible
-        color: '#000000'
+        width: '100%',
+        backgroundColor: '#141414',
+        border: '1px solid #1f1f1f',
+        borderRadius: '2px',
+        color: '#fff'
     },
-    outputButtons: {
-        display: 'flex',
-        gap: '10px',
-        flexWrap: 'wrap',
-        marginTop: '10px'
+    outputButton: {
+        width: '100%',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        border: 'none',
+        color: '#fff',
+        marginBottom: '8px',
+        height: '32px',
+        textAlign: 'center'
     },
     bottomActionButtons: {
         display: 'flex',
@@ -179,21 +218,56 @@ const styles = {
     viewControls: {
         marginBottom: '10px',
         display: 'flex',
+        flexDirection: 'row',
+        gap: '10px',
+        padding: '10px',
+        backgroundColor: '#1f1f1f',
+        borderBottom: '1px solid #303030',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+    },
+    orientationButtons: {
+        display: 'flex',
+        gap: '10px',
+        marginRight: '20px'
+    },
+    orientationButton: {
+        width: '40px',
+        height: '40px',
+        padding: '4px',
+        backgroundColor: '#141414',
+        border: '1px solid #303030',
+        cursor: 'pointer',
+        display: 'flex',
         flexDirection: 'column',
-        gap: '10px'
+        justifyContent: 'space-between'
+    },
+    buttonBars: {
+        display: 'flex',
+        height: '8px',
+        gap: '2px'
+    },
+    blueBar: {
+        backgroundColor: '#1890ff',
+        flex: 1
+    },
+    whiteBar: {
+        backgroundColor: '#fff',
+        flex: 1
     },
     viewButtons: {
         display: 'flex',
         gap: '5px'
     },
     axisToggles: {
-        margin: '10px 0',
         display: 'flex',
-        gap: '10px'
+        gap: '10px',
+        alignItems: 'center'
     },
     modelToggles: {
         display: 'flex',
-        gap: '10px'
+        gap: '10px',
+        alignItems: 'center'
     }
 };
 
@@ -262,9 +336,18 @@ const ColumnCoverPlateBolted = () => {
     const [downloadFileName, setDownloadFileName] = useState('');
     const [downloadTags, setDownloadTags] = useState('');
     const [downloadLocation, setDownloadLocation] = useState('');
+    const [exceptionModalVisible, setExceptionModalVisible] = useState(false);
+    const [tutorialsModalVisible, setTutorialsModalVisible] = useState(false);
+    const [askQuestionModalVisible, setAskQuestionModalVisible] = useState(false);
+    const [resetModalVisible, setResetModalVisible] = useState(false);
+    const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
     // Add state for design preferences modal
     const [isDesignPreferencesVisible, setIsDesignPreferencesVisible] = useState(false);
+
+    // Add state for view expansion
+    const [expandLeft, setExpandLeft] = useState(false);
+    const [expandRight, setExpandRight] = useState(false);
 
     // Create a new session when the component mounts
     useEffect(() => {
@@ -595,10 +678,7 @@ const ColumnCoverPlateBolted = () => {
                 setIsDesignPreferencesVisible(true);
                 break;
             case 'section-modeler':
-                notification.info({
-                    message: 'Section Modeler',
-                    description: 'Section Modeler functionality will be implemented here'
-                });
+                setExceptionModalVisible(true);
                 break;
             default:
                 break;
@@ -662,6 +742,9 @@ const ColumnCoverPlateBolted = () => {
 
     // Update the database menu click handler with better debugging
     const handleDatabaseMenuClick = ({ key }) => {
+        if (key === 'reset') {
+            setResetModalVisible(true);
+        }
         console.log("Database menu item clicked:", key);
         
         switch(key) {
@@ -693,44 +776,26 @@ const ColumnCoverPlateBolted = () => {
                 setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
                 setDownloadModalVisible(true);
                 break;
-            case 'reset':
-                notification.info({
-                    message: 'Reset',
-                    description: 'Reset functionality will be implemented here'
-                });
-                break;
             default:
                 console.log("Unknown database menu item:", key);
                 break;
         }
     };
 
-    // Define the handleHelpMenuClick function before creating the helpMenu
+    // Update the handleHelpMenuClick function
     const handleHelpMenuClick = ({ key }) => {
         switch(key) {
             case 'tutorials':
-                notification.info({
-                    message: 'Video Tutorials',
-                    description: 'Video Tutorials will be opened in a new window'
-                });
+                setTutorialsModalVisible(true);
                 break;
             case 'examples':
-                notification.info({
-                    message: 'Design Examples',
-                    description: 'Design Examples will be opened in a new window'
-                });
+                setExceptionModalVisible(true);
                 break;
             case 'question':
-                notification.info({
-                    message: 'Ask Us a Question',
-                    description: 'Support form will be opened in a new window'
-                });
+                setAskQuestionModalVisible(true);
                 break;
             case 'about':
-                notification.info({
-                    message: 'About Osdag',
-                    description: 'Osdag information will be displayed'
-                });
+                setAboutModalVisible(true);
                 break;
             case 'update':
                 notification.info({
@@ -856,7 +921,7 @@ const ColumnCoverPlateBolted = () => {
         </Menu>
     );
 
-    // Update the database menu to use a simpler structure without the submenu
+    // Create the database menu
     const databaseMenu = (
         <Menu onClick={handleDatabaseMenuClick}>
             <Menu.SubMenu key="download" title="Download">
@@ -888,146 +953,147 @@ const ColumnCoverPlateBolted = () => {
         setDownloadModalVisible(false);
     };
 
+    // Handle view expansion
+    const handleLeftExpand = () => {
+        setExpandLeft(!expandLeft);
+        setExpandRight(false);
+    };
+
+    const handleRightExpand = () => {
+        setExpandRight(!expandRight);
+        setExpandLeft(false);
+    };
+
     return (
-        <Layout style={{ 
-            height: '100vh', 
-            width: '100vw', 
-            margin: 0,
-            padding: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
-        }}>
-            {/* Top Navigation Bar */}
-            <Header style={{ 
-                height: '40px',
-                width: '100%',
-                padding: '0 20px',
-                margin: 0,
-                lineHeight: '40px',
-                background: '#001529'
-            }}>
-                <Menu mode="horizontal" theme="dark" style={{ lineHeight: '40px' }}>
-                    <Menu.Item key="file" style={{ paddingRight: '30px' }}>
-                        <Dropdown overlay={fileMenu} trigger={['click']}>
-                            <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
-                                <FileOutlined style={{ marginRight: '5px' }} />
-                                File <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
-                            </span>
-                        </Dropdown>
-                    </Menu.Item>
-                    <Menu.Item key="edit" style={{ paddingRight: '30px' }}>
-                        <Dropdown overlay={editMenu} trigger={['click']}>
-                            <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
-                                <EditOutlined style={{ marginRight: '5px' }} />
-                                Edit <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
-                            </span>
-                        </Dropdown>
-                    </Menu.Item>
-                    <Menu.Item key="graphics" style={{ paddingRight: '30px' }}>
-                        <Dropdown overlay={graphicsMenu} trigger={['click']}>
-                            <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
-                                <SettingOutlined style={{ marginRight: '5px' }} />
-                                Graphics <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
-                            </span>
-                        </Dropdown>
-                    </Menu.Item>
-                    <Menu.Item key="database" style={{ paddingRight: '30px' }}>
-                        <Dropdown overlay={databaseMenu} trigger={['click']}>
-                            <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
-                                <DatabaseOutlined style={{ marginRight: '5px' }} />
-                                Database <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
-                            </span>
-                        </Dropdown>
-                    </Menu.Item>
-                    <Menu.Item key="help" style={{ paddingRight: '30px' }}>
-                        <Dropdown overlay={helpMenu} trigger={['click']}>
-                            <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
-                                <QuestionOutlined style={{ marginRight: '5px' }} />
-                                Help <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
-                            </span>
-                        </Dropdown>
-                    </Menu.Item>
-                </Menu>
-            </Header>
+        <ConfigProvider
+            theme={{
+                algorithm: theme.darkAlgorithm,
+                token: {
+                    colorPrimary: '#1890ff',
+                    colorBgContainer: '#141414',
+                    colorBgElevated: '#1f1f1f',
+                    colorText: '#fff',
+                    colorBorder: '#303030',
+                    borderRadius: 4,
+                }
+            }}
+        >
+            <Layout style={styles.layout}>
+                {/* Top Navigation Bar */}
+                <Header style={styles.header}>
+                    <Menu mode="horizontal" theme="dark" style={{ lineHeight: '40px' }}>
+                        <Menu.Item key="file" style={{ paddingRight: '30px' }}>
+                            <Dropdown overlay={fileMenu} trigger={['click']}>
+                                <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+                                    <FileOutlined style={{ marginRight: '5px' }} />
+                                    File <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
+                                </span>
+                            </Dropdown>
+                        </Menu.Item>
+                        <Menu.Item key="edit" style={{ paddingRight: '30px' }}>
+                            <Dropdown overlay={editMenu} trigger={['click']}>
+                                <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+                                    <EditOutlined style={{ marginRight: '5px' }} />
+                                    Edit <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
+                                </span>
+                            </Dropdown>
+                        </Menu.Item>
+                        <Menu.Item key="graphics" style={{ paddingRight: '30px' }}>
+                            <Dropdown overlay={graphicsMenu} trigger={['click']}>
+                                <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+                                    <SettingOutlined style={{ marginRight: '5px' }} />
+                                    Graphics <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
+                                </span>
+                            </Dropdown>
+                        </Menu.Item>
+                        <Menu.Item key="database" style={{ paddingRight: '30px' }}>
+                            <Dropdown overlay={databaseMenu} trigger={['click']}>
+                                <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+                                    <DatabaseOutlined style={{ marginRight: '5px' }} />
+                                    Database <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
+                                </span>
+                            </Dropdown>
+                        </Menu.Item>
+                        <Menu.Item key="help" style={{ paddingRight: '30px' }}>
+                            <Dropdown overlay={helpMenu} trigger={['click']}>
+                                <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+                                    <QuestionOutlined style={{ marginRight: '5px' }} />
+                                    Help <DownOutlined style={{ fontSize: '10px', marginLeft: '5px' }} />
+                                </span>
+                            </Dropdown>
+                        </Menu.Item>
+                    </Menu>
+                </Header>
 
-            {/* Title Bar */}
-            <div style={{ 
-                width: '100%',
-                textAlign: 'center',
-                padding: '5px 0',
-                margin: 0,
-                fontSize: '18px',
-                fontWeight: 'bold',
-                borderBottom: '1px solid #ddd'
-            }}>
-                Column Cover Plate Bolted Connection
-            </div>
+                {/* Title Bar */}
+                <div style={styles.title}>
+                    Column Cover Plate Bolted Connection
+                </div>
 
-            {/* Main Content */}
-            <Content style={{ 
-                flex: 1,
-                width: '100%',
-                padding: 0,
-                margin: 0,
-                overflow: 'hidden'
-            }}>
-                <Row style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    margin: 0, 
-                    padding: 0,
-                    display: 'flex'
-                }}>
-                    {/* Input Column - exactly 1/3 width */}
-                    <Col style={{ flex: '1 1 33.333%', height: '100%', padding: '0 1px' }}>
-                        <div style={styles.contentSection}>
-                            <div style={styles.sectionTitle}>Input</div>
-                            <div style={styles.sectionContent}>
-                                <div style={{ width: '100%' }}>
-                                    {/* Connecting Members Section */}
-                                    <div style={{ 
-                                        marginBottom: '15px',
-                                        border: '1px solid #f0f0f0',
-                                        borderRadius: '4px',
-                                        padding: '10px'
-                                    }}>
+                {/* Main Content */}
+                <Content style={styles.mainContent}>
+                    <Row style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        margin: 0, 
+                        padding: 0,
+                        display: 'flex',
+                        flexDirection: 'row',
+                        minHeight: 0,
+                        backgroundColor: '#141414',
+                        flex: 1
+                    }}>
+                        {/* Input Column */}
+                        <Col span={expandLeft ? 0 : 8} style={{ height: '100%', padding: '0 1px', transition: 'all 0.3s ease', overflow: 'hidden' }}>
+                            <div style={styles.contentSection}>
+                                <div style={styles.sectionTitle}>Input</div>
+                                <div style={styles.sectionContent}>
+                                    <div style={{ width: '100%' }}>
+                                        {/* Connecting Members Section */}
                                         <div style={{ 
-                                            fontWeight: 'bold',
-                                            borderBottom: '1px solid #f0f0f0',
-                                            marginBottom: '10px',
-                                            paddingBottom: '5px'
+                                            marginBottom: '15px',
+                                            border: '1px solid #303030',  // Darker border
+                                            borderRadius: '4px',
+                                            padding: '10px',
+                                            backgroundColor: '#1f1f1f'  // Darker section background
                                         }}>
-                                            Connecting Members
-                                        </div>
-                                        <div style={{ 
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '10px'
-                                        }}>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Section Designation</div>
-                                                <Select
-                                                        value={formData["Member.Supporting_Section.Designation"]}
-                                                    style={{ width: '100%' }}
-                                                    onChange={(value) => {
-                                                        handleInputChange("Member.Supporting_Section.Designation", value);
-                                                        handleInputChange("Member.Supported_Section.Designation", value);
-                                                    }}
-                                                    defaultValue="Select Section"
-                                                >
-                                                    <Option value="Select Section">Select Section</Option>
-                                                    <Option value="HB 150">HB 150</Option>
-                                                    <Option value="HB 150*">HB 150*</Option>
-                                                    <Option value="HB 200">HB 200</Option>
-                                                </Select>
+                                            <div style={{ 
+                                                fontWeight: 'bold',
+                                                borderBottom: '1px solid #303030',  // Darker border
+                                                marginBottom: '10px',
+                                                paddingBottom: '5px',
+                                                color: '#fff'  // White text
+                                            }}>
+                                                Connecting Members
                                             </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Material</div>
+                                            <div style={{ 
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '10px'
+                                            }}>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Section Designation</div>
+                                                    <Select
+                                                        value={formData["Member.Supporting_Section.Designation"]}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => {
+                                                            handleInputChange("Member.Supporting_Section.Designation", value);
+                                                            handleInputChange("Member.Supported_Section.Designation", value);
+                                                        }}
+                                                        defaultValue="Select Section"
+                                                    >
+                                                        <Option value="Select Section">Select Section</Option>
+                                                        <Option value="HB 150">HB 150</Option>
+                                                        <Option value="HB 150*">HB 150*</Option>
+                                                        <Option value="HB 200">HB 200</Option>
+                                                    </Select>
+                                            </div>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Material</div>
                                                 <Select
-                                                    defaultValue="E 165 (Fe 290)"
+                                                        defaultValue="E 165 (Fe 290)"
                                                     value={formData["Member.Supporting_Section.Material"]}
-                                                    style={{ width: '100%' }}
+                                                        style={{ width: '100%' }}
                                                     onChange={(value) => {
                                                         handleInputChange("Member.Supporting_Section.Material", value);
                                                         handleInputChange("Member.Supported_Section.Material", value);
@@ -1048,7 +1114,7 @@ const ColumnCoverPlateBolted = () => {
                                                 </Select>
                                                 {formData["Member.Supporting_Section.Material"] === "Custom" && (
                                                     <Button
-                                                        style={{ marginTop: '5px' }}
+                                                            style={{ marginTop: '5px' }}
                                                         onClick={() => setIsCustomSectionModalVisible(true)}
                                                     >
                                                         Custom Material
@@ -1056,472 +1122,567 @@ const ColumnCoverPlateBolted = () => {
                                                 )}
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Factored Loads Section */}
-                                    <div style={{ 
-                                        marginBottom: '15px',
-                                        border: '1px solid #f0f0f0',
-                                        borderRadius: '4px',
-                                        padding: '10px'
-                                    }}>
-                                        <div style={{ 
-                                            fontWeight: 'bold',
-                                            borderBottom: '1px solid #f0f0f0',
-                                            marginBottom: '10px',
-                                            paddingBottom: '5px'
-                                        }}>
-                                            Factored Loads
-                                        </div>
-                                        <div style={{ 
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '10px'
-                                        }}>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Bending Moment (kNm)</div>
-                                                <Input
-                                                    style={{ width: '100%' }}
-                                                    value={formData["Load.Moment"]}
-                                                    onChange={(e) => handleInputChange("Load.Moment", e.target.value)}
-                                                />
                                             </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Shear Force (kN)</div>
+
+                                        {/* Factored Loads Section */}
+                                        <div style={{ 
+                                            marginBottom: '15px',
+                                            border: '1px solid #303030',  // Darker border
+                                            borderRadius: '4px',
+                                            padding: '10px',
+                                            backgroundColor: '#1f1f1f'  // Darker section background
+                                        }}>
+                                            <div style={{ 
+                                                fontWeight: 'bold',
+                                                borderBottom: '1px solid #303030',  // Darker border
+                                                marginBottom: '10px',
+                                                paddingBottom: '5px',
+                                                color: '#fff'  // White text
+                                            }}>
+                                                Factored Loads
+                                        </div>
+                                            <div style={{ 
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '10px'
+                                            }}>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Bending Moment (kNm)</div>
                                                 <Input
-                                                    style={{ width: '100%' }}
+                                                        style={{ width: '100%' }}
+                                                        value={formData["Load.Moment"]}
+                                                        onChange={(e) => handleInputChange("Load.Moment", e.target.value)}
+                                                    />
+                                                </div>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Shear Force (kN)</div>
+                                                    <Input
+                                                        style={{ width: '100%' }}
                                                     value={formData["Load.Shear"]}
                                                     onChange={(e) => handleInputChange("Load.Shear", e.target.value)}
                                                 />
                                             </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Axial Force (kN)</div>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Axial Force (kN)</div>
                                                 <Input
-                                                    style={{ width: '100%' }}
+                                                        style={{ width: '100%' }}
                                                     value={formData["Load.Axial"]}
                                                     onChange={(e) => handleInputChange("Load.Axial", e.target.value)}
                                                 />
                                             </div>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Bolt Properties Section */}
-                                    <div style={{ 
-                                        marginBottom: '15px',
-                                        border: '1px solid #f0f0f0',
-                                        borderRadius: '4px',
-                                        padding: '10px'
-                                    }}>
+                                        {/* Bolt Properties Section */}
                                         <div style={{ 
-                                            fontWeight: 'bold',
-                                            borderBottom: '1px solid #f0f0f0',
-                                            marginBottom: '10px',
-                                            paddingBottom: '5px'
+                                            marginBottom: '15px',
+                                            border: '1px solid #303030',  // Darker border
+                                            borderRadius: '4px',
+                                            padding: '10px',
+                                            backgroundColor: '#1f1f1f'  // Darker section background
                                         }}>
-                                            Bolt
-                                        </div>
-                                        <div style={{ 
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '10px'
-                                        }}>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Diameter (mm)</div>
-                                                <Select
-                                                    value={formData["Bolt.Diameter.Option"] || "All"}
-                                                    style={{ width: '100%' }}
-                                                    onChange={(value) => {
-                                                        if (value === "All") {
-                                                            handleInputChange("Bolt.Diameter", ["12", "16", "20", "24", "30", "36"]);
-                                                        } else if (value === "Customized") {
-                                                            setIsBoltSectionModalVisible(true);
-                                                        }
-                                                        handleInputChange("Bolt.Diameter.Option", value);
-                                                    }}
-                                                >
-                                                    <Option value="All">All</Option>
-                                                    <Option value="Customized">Customized</Option>
-                                                </Select>
+                                            <div style={{ 
+                                                fontWeight: 'bold',
+                                                borderBottom: '1px solid #303030',  // Darker border
+                                                marginBottom: '10px',
+                                                paddingBottom: '5px',
+                                                color: '#fff'  // White text
+                                            }}>
+                                                Bolt
                                             </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Type</div>
-                                                <Select
-                                                    value={formData["Bolt.Type"]}
-                                                    style={{ width: '100%' }}
-                                                    onChange={(value) => handleInputChange("Bolt.Type", value)}
-                                                    defaultValue="Bearing Bolt"
-                                                >
-                                                    <Option value="Bearing Bolt">Bearing Bolt</Option>
-                                                    <Option value="Friction Grip Bolt">Friction Grip Bolt</Option>
-                                                </Select>
-                                        </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Property Class</div>
-                                                <Select
-                                                    value={formData["Bolt.Grade.Option"] || "All"}
-                                                    style={{ width: '100%' }}
-                                                    onChange={(value) => {
-                                                        if (value === "All") {
-                                                            handleInputChange("Bolt.Grade", ["4.6", "4.8", "5.6", "6.8", "8.8", "9.8", "10.9", "12.9"]);
-                                                        } else if (value === "Customized") {
-                                                            setIsBoltSectionModalVisible(true);
-                                                        }
-                                                        handleInputChange("Bolt.Grade.Option", value);
-                                                    }}
-                                                >
-                                                    <Option value="All">All</Option>
-                                                    <Option value="Customized">Customized</Option>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Flange Splice Plate Section */}
-                                    <div style={{ 
-                                        marginBottom: '15px',
-                                        border: '1px solid #f0f0f0',
-                                        borderRadius: '4px',
-                                        padding: '10px'
-                                    }}>
-                                        <div style={{ 
-                                            fontWeight: 'bold',
-                                            borderBottom: '1px solid #f0f0f0',
-                                            marginBottom: '10px',
-                                            paddingBottom: '5px'
-                                        }}>
-                                            Flange Splice Plate
-                                        </div>
-                                        <div style={{ 
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '10px'
-                                        }}>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Preference</div>
-                                                <Select
-                                                    value={formData["Flange.Preference"] || "Outside"}
-                                                    style={{ width: '100%' }}
-                                                    onChange={(value) => handleInputChange("Flange.Preference", value)}
-                                                    defaultValue="Outside"
-                                                >
-                                                    <Option value="Outside">Outside</Option>
-                                                    <Option value="Outside+Inside">Outside+Inside</Option>
-                                                </Select>
-                                            </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Thickness (mm)</div>
-                                                <Select
-                                                    value={formData["Connector.Flange_Plate.Thickness.Option"] || "All"}
-                                                    style={{ width: '100%' }}
-                                                    onChange={(value) => {
-                                                        if (value === "All") {
-                                                            handleInputChange("Connector.Flange_Plate.Thickness_List", ["6", "8", "10", "12", "14", "16", "18", "20", "22", "25", "28", "32", "36", "40"]);
-                                                        } else if (value === "Customized") {
-                                                            setIsConnectorSectionModalVisible(true);
-                                                        }
-                                                        handleInputChange("Connector.Flange_Plate.Thickness.Option", value);
-                                                    }}
-                                                >
-                                                    <Option value="All">All</Option>
-                                                    <Option value="Customized">Customized</Option>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Web Splice Plate Section */}
-                                    <div style={{ 
-                                        marginBottom: '15px',
-                                        border: '1px solid #f0f0f0',
-                                        borderRadius: '4px',
-                                        padding: '10px'
-                                    }}>
-                                        <div style={{ 
-                                            fontWeight: 'bold',
-                                            borderBottom: '1px solid #f0f0f0',
-                                            marginBottom: '10px',
-                                            paddingBottom: '5px'
-                                        }}>
-                                            Web Splice Plate
-                                        </div>
-                                        <div style={{ 
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '10px'
-                                        }}>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <div style={{ marginBottom: '5px' }}>Thickness (mm)</div>
-                                                <Select
-                                                    value={formData["Connector.Web_Plate.Thickness.Option"] || "All"}
-                                                    style={{ width: '100%' }}
-                                                    onChange={(value) => {
-                                                        if (value === "All") {
-                                                            handleInputChange("Connector.Web_Plate.Thickness_List", ["6", "8", "10", "12", "14", "16", "18", "20", "22", "25", "28", "32", "36", "40"]);
-                                                        } else if (value === "Customized") {
-                                                            setIsConnectorSectionModalVisible(true);
-                                                        }
-                                                        handleInputChange("Connector.Web_Plate.Thickness.Option", value);
-                                                    }}
-                                                >
-                                                    <Option value="All">All</Option>
-                                                    <Option value="Customized">Customized</Option>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div style={{ 
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        marginTop: '20px'
-                                    }}>
-                                        <Button 
-                                            type="primary" 
-                                            danger
-                                            onClick={resetForm}
-                                        >
-                                            Reset
-                                        </Button>
-                                        <Button 
-                                            type="primary"
-                                            onClick={generateOutput}
-                                            loading={loading}
-                                        >
-                                            Design
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Col>
-                    
-                    {/* 3D View Column - exactly 1/3 width */}
-                    <Col style={{ flex: '1 1 33.333%', height: '100%', padding: '0 1px' }}>
-                        <div style={styles.contentSection}>
-                            <div style={styles.sectionTitle}>3D View</div>
-                            <div style={styles.sectionContent}>
-                                <div style={styles.viewControls}>
-                                    <div style={styles.viewButtons}>
-                                        <Button style={{ marginRight: '5px' }}>Isometric</Button>
-                                        <Button style={{ marginRight: '5px' }}>Front</Button>
-                                        <Button>Side</Button>
-                                    </div>
-                                    <div style={styles.axisToggles}>
-                                        <Checkbox defaultChecked style={{ marginRight: '10px' }}>Z</Checkbox>
-                                        <Checkbox defaultChecked style={{ marginRight: '10px' }}>Y</Checkbox>
-                                        <Checkbox defaultChecked style={{ marginRight: '10px' }}>Lx</Checkbox>
-                                        <Checkbox defaultChecked>Ly</Checkbox>
-                                    </div>
-                                    <div style={styles.modelToggles}>
-                                        <Checkbox defaultChecked style={{ marginRight: '10px' }}>Model</Checkbox>
-                                        <Checkbox defaultChecked style={{ marginRight: '10px' }}>Column</Checkbox>
-                                        <Checkbox defaultChecked>Cover Plate</Checkbox>
-                                    </div>
-                                </div>
-                                <div style={styles.viewerContainer}>
-                                    <ErrorBoundary>
-                                        <ThreeRender 
-                                            resetFlag={resetFlag}
-                                            hasOutput={modelGenerated}
-                                            showMessage={true}
-                                        />
-                                    </ErrorBoundary>
-                                </div>
-                                <div style={styles.logConsole}>
-                                    {logs && logs.length > 0 && (
-                                        <div>
-                                            {logs.slice(0, 5).map((log, index) => (
-                                                <div key={index} style={{
-                                                    color: log.type === 'ERROR' ? 'red' : 
-                                                           log.type === 'WARNING' ? '#faad14' : 'inherit',
-                                                    marginBottom: '2px'
-                                                }}>
-                                                    {log.msg}
+                                            <div style={{ 
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '10px'
+                                            }}>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Diameter (mm)</div>
+                                                    <Select
+                                                        value={formData["Bolt.Diameter.Option"] || "All"}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => {
+                                                            if (value === "All") {
+                                                                handleInputChange("Bolt.Diameter", ["12", "16", "20", "24", "30", "36"]);
+                                                            } else if (value === "Customized") {
+                                                                setIsBoltSectionModalVisible(true);
+                                                            }
+                                                            handleInputChange("Bolt.Diameter.Option", value);
+                                                        }}
+                                                    >
+                                                        <Option value="All">All</Option>
+                                                        <Option value="Customized">Customized</Option>
+                                                    </Select>
                                                 </div>
-                                            ))}
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Type</div>
+                                                    <Select
+                                                        value={formData["Bolt.Type"]}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => handleInputChange("Bolt.Type", value)}
+                                                        defaultValue="Bearing Bolt"
+                                                    >
+                                                        <Option value="Bearing Bolt">Bearing Bolt</Option>
+                                                        <Option value="Friction Grip Bolt">Friction Grip Bolt</Option>
+                                                    </Select>
+                                            </div>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Property Class</div>
+                                                    <Select
+                                                        value={formData["Bolt.Grade.Option"] || "All"}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => {
+                                                            if (value === "All") {
+                                                                handleInputChange("Bolt.Grade", ["4.6", "4.8", "5.6", "6.8", "8.8", "9.8", "10.9", "12.9"]);
+                                                            } else if (value === "Customized") {
+                                                                setIsBoltSectionModalVisible(true);
+                                                            }
+                                                            handleInputChange("Bolt.Grade.Option", value);
+                                                        }}
+                                                    >
+                                                        <Option value="All">All</Option>
+                                                        <Option value="Customized">Customized</Option>
+                                                    </Select>
+                                                </div>
+                                            </div>
                                         </div>
-                                    )}
+
+                                        {/* Flange Splice Plate Section */}
+                                        <div style={{ 
+                                            marginBottom: '15px',
+                                            border: '1px solid #303030',  // Darker border
+                                            borderRadius: '4px',
+                                            padding: '10px',
+                                            backgroundColor: '#1f1f1f'  // Darker section background
+                                        }}>
+                                            <div style={{ 
+                                                fontWeight: 'bold',
+                                                borderBottom: '1px solid #303030',  // Darker border
+                                                marginBottom: '10px',
+                                                paddingBottom: '5px',
+                                                color: '#fff'  // White text
+                                            }}>
+                                                Flange Splice Plate
+                                            </div>
+                                            <div style={{ 
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '10px'
+                                            }}>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Preference</div>
+                                                    <Select
+                                                        value={formData["Flange.Preference"] || "Outside"}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => handleInputChange("Flange.Preference", value)}
+                                                        defaultValue="Outside"
+                                                    >
+                                                        <Option value="Outside">Outside</Option>
+                                                        <Option value="Outside+Inside">Outside+Inside</Option>
+                                                    </Select>
+                                                </div>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Thickness (mm)</div>
+                                                    <Select
+                                                        value={formData["Connector.Flange_Plate.Thickness.Option"] || "All"}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => {
+                                                            if (value === "All") {
+                                                                handleInputChange("Connector.Flange_Plate.Thickness_List", ["6", "8", "10", "12", "14", "16", "18", "20", "22", "25", "28", "32", "36", "40"]);
+                                                            } else if (value === "Customized") {
+                                                                setIsConnectorSectionModalVisible(true);
+                                                            }
+                                                            handleInputChange("Connector.Flange_Plate.Thickness.Option", value);
+                                                        }}
+                                                    >
+                                                        <Option value="All">All</Option>
+                                                        <Option value="Customized">Customized</Option>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Web Splice Plate Section */}
+                                        <div style={{ 
+                                            marginBottom: '15px',
+                                            border: '1px solid #303030',  // Darker border
+                                            borderRadius: '4px',
+                                            padding: '10px',
+                                            backgroundColor: '#1f1f1f'  // Darker section background
+                                        }}>
+                                            <div style={{ 
+                                                fontWeight: 'bold',
+                                                borderBottom: '1px solid #303030',  // Darker border
+                                                marginBottom: '10px',
+                                                paddingBottom: '5px',
+                                                color: '#fff'  // White text
+                                            }}>
+                                                Web Splice Plate
+                                            </div>
+                                            <div style={{ 
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '10px'
+                                            }}>
+                                                <div style={{ marginBottom: '10px' }}>
+                                                    <div style={{ marginBottom: '5px' }}>Thickness (mm)</div>
+                                                    <Select
+                                                        value={formData["Connector.Web_Plate.Thickness.Option"] || "All"}
+                                                        style={{ width: '100%' }}
+                                                        onChange={(value) => {
+                                                            if (value === "All") {
+                                                                handleInputChange("Connector.Web_Plate.Thickness_List", ["6", "8", "10", "12", "14", "16", "18", "20", "22", "25", "28", "32", "36", "40"]);
+                                                            } else if (value === "Customized") {
+                                                                setIsConnectorSectionModalVisible(true);
+                                                            }
+                                                            handleInputChange("Connector.Web_Plate.Thickness.Option", value);
+                                                        }}
+                                                    >
+                                                        <Option value="All">All</Option>
+                                                        <Option value="Customized">Customized</Option>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div style={{ 
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            marginTop: '20px'
+                                        }}>
+                                    <Button
+                                                type="primary" 
+                                                danger
+                                        onClick={resetForm}
+                                    >
+                                        Reset
+                                    </Button>
+                                            <Button 
+                                                type="primary"
+                                        onClick={generateOutput}
+                                        loading={loading}
+                                    >
+                                        Design
+                                    </Button>
+                                </div>
+                                </div>
                                 </div>
                             </div>
-                        </div>
-                    </Col>
-                    
-                    {/* Output Column - exactly 1/3 width */}
-                    <Col style={{ flex: '1 1 33.333%', height: '100%', padding: '0 1px' }}>
-                        <div style={styles.contentSection}>
-                            <div style={styles.sectionTitle}>Output Dock</div>
-                            <div style={styles.sectionContent}>
-                                <div style={styles.outputContainer}>
-                                    <div style={styles.outputSection}>
-                                        <div style={styles.outputSectionHeader}>Member Capacity</div>
-                                        <Button size="small" style={{ marginBottom: '10px', width: '100%' }}>Member Capacity</Button>
-                                        
-                                        <div style={styles.outputSectionHeader}>Bolt</div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Diameter (mm):</span>
-                                                <Input
-                                                size="small"
-                                                value={output && output["Bolt.Diameter"] ? output["Bolt.Diameter"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                                />
-                                            </div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Property Class:</span>
-                                            <Select
-                                                size="small"
-                                                value={output && output["Bolt.Grade"] ? output["Bolt.Grade"].value : ""}
-                                                disabled
-                                                style={{ width: '58%' }}
+                        </Col>
+                        
+                        {/* 3D View Column */}
+                        <Col span={expandLeft ? 16 : expandRight ? 16 : 8} style={{ height: '100%', padding: '0 1px', transition: 'all 0.3s ease' }}>
+                            <div style={styles.contentSection}>
+                                <div style={styles.sectionTitle}>3D View</div>
+                                <div style={styles.sectionContent}>
+                                    <div style={styles.viewControls}>
+                                        <div style={styles.orientationButtons}>
+                                            {/* Left expand button */}
+                                            <div 
+                                                style={styles.orientationButton} 
+                                                onClick={handleLeftExpand}
+                                                title="Expand view to left"
                                             >
-                                                <Option value={output && output["Bolt.Grade"] ? output["Bolt.Grade"].value : ""}>
-                                                    {output && output["Bolt.Grade"] ? output["Bolt.Grade"].value : ""}
-                                                </Option>
-                                            </Select>
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '5px', marginBottom: '10px' }}>
-                                            <Button size="small" style={{ width: '100%' }}>Flange Bolt Capacity</Button>
-                                            <Button size="small" style={{ width: '100%' }}>Web Bolt Capacity</Button>
-                                        </div>
-                                        
-                                        <div style={styles.outputSectionHeader}>Web Splice Plate</div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Height (mm):</span>
-                                                <Input
-                                                size="small"
-                                                value={output && output["WebPlate.Height"] ? output["WebPlate.Height"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                                />
+                                                <div style={styles.buttonBars}>
+                                                    <div style={styles.blueBar} />
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.whiteBar} />
+                                                </div>
+                                                <div style={styles.buttonBars}>
+                                                    <div style={styles.blueBar} />
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.whiteBar} />
+                                                </div>
+                                                <div style={styles.buttonBars}>
+                                                    <div style={styles.blueBar} />
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.whiteBar} />
+                                                </div>
                                             </div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Width (mm):</span>
-                                                <Input
-                                                size="small"
-                                                value={output && output["WebPlate.Width"] ? output["WebPlate.Width"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                                />
+                                            {/* Right expand button */}
+                                            <div 
+                                                style={styles.orientationButton}
+                                                onClick={handleRightExpand}
+                                                title="Expand view to right"
+                                            >
+                                                <div style={styles.buttonBars}>
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.blueBar} />
+                                                </div>
+                                                <div style={styles.buttonBars}>
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.blueBar} />
+                                                </div>
+                                                <div style={styles.buttonBars}>
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.whiteBar} />
+                                                    <div style={styles.blueBar} />
+                                                </div>
                                             </div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Thickness (mm):</span>
-                                            <Input 
-                                                size="small"
-                                                value={output && output["WebPlate.Thickness"] ? output["WebPlate.Thickness"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                            />
                                         </div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Spacing (mm):</span>
-                                            <Input 
-                                                size="small"
-                                                value={output && output["WebPlate.Spacing"] ? output["WebPlate.Spacing"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                            />
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '5px', marginBottom: '10px' }}>
-                                            <Button size="small" style={{ width: '100%' }}>Web Spacing Details</Button>
-                                            <Button size="small" style={{ width: '100%' }}>Web Capacity</Button>
-                                        </div>
-                                        
-                                        <div style={styles.outputSectionHeader}>Flange Splice Plate Outer Plate</div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Width (mm):</span>
-                                            <Input 
-                                                size="small"
-                                                value={output && output["FlangePlate.Width"] ? output["FlangePlate.Width"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                            />
-                                        </div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Length (mm):</span>
-                                            <Input 
-                                                size="small"
-                                                value={output && output["FlangePlate.Length"] ? output["FlangePlate.Length"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                            />
-                                        </div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Thickness (mm):</span>
-                                            <Input 
-                                                size="small"
-                                                value={output && output["FlangePlate.Thickness"] ? output["FlangePlate.Thickness"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                            />
-                                        </div>
-                                        <div style={styles.outputField}>
-                                            <span style={styles.outputLabel}>Spacing (mm):</span>
-                                            <Input 
-                                                size="small"
-                                                value={output && output["FlangePlate.Spacing"] ? output["FlangePlate.Spacing"].value : ""}
-                                                readOnly
-                                                style={{ width: '58%' }}
-                                            />
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '5px', marginBottom: '10px' }}>
-                                            <Button size="small" style={{ width: '100%' }}>Flange Spacing Details</Button>
-                                            <Button size="small" style={{ width: '100%' }}>Flange Capacity</Button>
+                                        <div style={styles.viewButtons}>
+                                    <Button
+                                                style={{ 
+                                                    backgroundColor: '#141414',
+                                                    color: '#fff',
+                                                    border: '1px solid #303030'
+                                                }}
+                                            >
+                                                Isometric
+                                            </Button>
+                                            <Button 
+                                                style={{ 
+                                                    backgroundColor: '#141414',
+                                                    color: '#fff',
+                                                    border: '1px solid #303030'
+                                                }}
+                                            >
+                                                Front
+                                            </Button>
+                                            <Button 
+                                                style={{ 
+                                                    backgroundColor: '#141414',
+                                                    color: '#fff',
+                                                    border: '1px solid #303030'
+                                                }}
+                                            >
+                                                Side
+                                    </Button>
+                                </div>
+                                        <div style={styles.axisToggles}>
+                                            <Checkbox 
+                                                defaultChecked 
+                                                style={{ color: '#fff' }}
+                                            >
+                                                Z
+                                            </Checkbox>
+                                            <Checkbox 
+                                                defaultChecked 
+                                                style={{ color: '#fff' }}
+                                            >
+                                                Y
+                                            </Checkbox>
+                                            <Checkbox 
+                                                defaultChecked 
+                                                style={{ color: '#fff' }}
+                                            >
+                                                Lx
+                                            </Checkbox>
+                                            <Checkbox 
+                                                defaultChecked 
+                                                style={{ color: '#fff' }}
+                                            >
+                                                Ly
+                                            </Checkbox>
+                                </div>
+                                        <div style={styles.modelToggles}>
+                                            <Checkbox 
+                                                defaultChecked 
+                                                style={{ color: '#fff' }}
+                                            >
+                                                Model
+                                            </Checkbox>
+                                            <Checkbox 
+                                                defaultChecked 
+                                                style={{ color: '#fff' }}
+                                            >
+                                                Column
+                                            </Checkbox>
+                                            <Checkbox 
+                                                defaultChecked 
+                                                style={{ color: '#fff' }}
+                                            >
+                                                Cover Plate
+                                            </Checkbox>
                                         </div>
                                     </div>
-                                    <div style={{ 
-                                        marginTop: '10px', 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between',
-                                        gap: '5px'
-                                    }}>
-                                    <Button
-                                            size="small"
-                                            icon={<FileTextOutlined />} 
-                                            onClick={generateReport}
-                                            style={{ flex: 1 }}
-                                            disabled={!output}
-                                        >
-                                            Create Design Report
-                                    </Button>
-                                    <Button
-                                            size="small"
-                                            icon={<SaveOutlined />} 
-                                            onClick={saveInputFile}
-                                            style={{ flex: 1 }}
-                                            disabled={!output}
-                                        >
-                                            Save Output
-                                    </Button>
-                                </div>
-                                </div>
-
+                                    <div style={styles.viewerContainer}>
+                                        <ErrorBoundary>
+                                            <ThreeRender 
+                                                resetFlag={resetFlag}
+                                                hasOutput={modelGenerated}
+                                                showMessage={true}
+                                            />
+                                        </ErrorBoundary>
+                                    </div>
+                                    <div style={styles.logConsole}>
                                 {logs && logs.length > 0 && (
-                                    <div style={{ marginTop: '10px' }}>
-                                        <h4 style={{ margin: '5px 0' }}>Logs</h4>
-                                        <div style={{ 
-                                            maxHeight: '150px', 
-                                            overflow: 'auto', 
-                                            border: '1px solid #ddd', 
-                                            padding: '3px',
-                                            fontSize: '12px'
-                                        }}>
-                                            {logs.map((log, index) => (
-                                                <div key={index} style={{
-                                                    color: log.type === 'ERROR' ? 'red' : 
-                                                           log.type === 'WARNING' ? '#faad14' : 'inherit',
-                                                    marginBottom: '2px'
-                                                }}>
+                                            <div>
+                                                {logs.slice(0, 5).map((log, index) => (
+                                                    <div key={index} style={{
+                                                        color: log.type === 'ERROR' ? 'red' : 
+                                                               log.type === 'WARNING' ? '#faad14' : '#fff',
+                                                        marginBottom: '2px'
+                                                    }}>
                                                     {log.msg}
                                                 </div>
                                             ))}
-                                        </div>
                                     </div>
                                 )}
                                 </div>
                     </div>
-                    </Col>
-                </Row>
+                            </div>
+                        </Col>
+                        
+                        {/* Output Column */}
+                        <Col span={expandRight ? 0 : 8} style={{ height: '100%', padding: '0 1px', transition: 'all 0.3s ease', overflow: 'hidden' }}>
+                            <div style={styles.contentSection}>
+                                <div style={styles.sectionTitle}>Output</div>
+                                <div style={styles.sectionContent}>
+                                    <div style={styles.outputContainer}>
+                                        <div style={styles.outputSection}>
+                                            {/* Member Capacity Section */}
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <div style={styles.outputSectionHeader}>Member Capacity</div>
+                                                <Button style={styles.outputButton}>
+                                                    Member Capacity
+                </Button>
+                                            </div>
+
+                                            {/* Bolt Section */}
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <div style={styles.outputSectionHeader}>Bolt</div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Diameter (mm)</div>
+                                                    <Input
+                                                        value={output?.["Bolt.Diameter"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Property Class *</div>
+                                                    <Input
+                                                        value={output?.["Bolt.Grade"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Bolt Capacities</div>
+                                                    <Button style={styles.outputButton}>
+                                                        Flange Bolt Capacity
+                </Button>
+                                                    <Button style={styles.outputButton}>
+                                                        Web Bolt Capacity
+                </Button>
+                                                </div>
+            </div>
+
+                                            {/* Web Splice Plate Section */}
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <div style={styles.outputSectionHeader}>Web Splice Plate</div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Height (mm)</div>
+                                                    <Input
+                                                        value={output?.["WebPlate.Height"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Width (mm)</div>
+                                                    <Input
+                                                        value={output?.["WebPlate.Width"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Thickness (mm) *</div>
+                                                    <Input
+                                                        value={output?.["WebPlate.Thickness"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Spacing (mm)</div>
+                                                    <Button style={styles.outputButton}>
+                                                        Web Spacing Details
+                                                    </Button>
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Capacity</div>
+                                                    <Button style={styles.outputButton}>
+                                                        Web Capacity
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            {/* Flange Splice Plate Section */}
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <div style={styles.outputSectionHeader}>Flange Splice Plate Outer Plate</div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Width (mm)</div>
+                                                    <Input
+                                                        value={output?.["FlangePlate.Width"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Length (mm)</div>
+                                                    <Input
+                                                        value={output?.["FlangePlate.Length"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Thickness (mm) *</div>
+                                                    <Input
+                                                        value={output?.["FlangePlate.Thickness"]?.value || ""}
+                                                        readOnly
+                                                        style={styles.outputValue}
+                                                    />
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Spacing (mm)</div>
+                                                    <Button style={styles.outputButton}>
+                                                        Flange Spacing Details
+                                                    </Button>
+                                                </div>
+                                                <div style={styles.outputField}>
+                                                    <div style={styles.outputLabel}>Capacity</div>
+                                                    <Button style={styles.outputButton}>
+                                                        Flange Capacity
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div style={styles.actionButtons}>
+                                            <Button 
+                                                onClick={generateReport}
+                                                style={{
+                                                    backgroundColor: '#8B0000',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    height: '40px'
+                                                }}
+                                            >
+                                                Create design report
+                                            </Button>
+                                            <Button 
+                                                onClick={saveInputFile}
+                                                style={{
+                                                    backgroundColor: '#8B0000',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    height: '40px'
+                                                }}
+                                            >
+                                                Save Output
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Col>
+                    </Row>
                 </Content>
 
             {/* Modals */}
@@ -1634,151 +1795,490 @@ const ColumnCoverPlateBolted = () => {
                 resetFlag={resetFlag}
             />
 
-            {/* Design Preferences Modal */}
-            <Modal
-                title={null}
-                open={isDesignPreferencesVisible}
-                onCancel={() => setIsDesignPreferencesVisible(false)}
-                footer={null}
-                width={1000}
-                bodyStyle={{ padding: 0 }}
-                destroyOnClose
-                maskClosable={false}
-                centered
-            >
-                <DesignPreferences
+                {/* Design Preferences Modal */}
+                <Modal
+                    title={null}
+                    open={isDesignPreferencesVisible}
                     onCancel={() => setIsDesignPreferencesVisible(false)}
-                    onSave={handleSaveDesignPreferences}
-                    initialValues={{
-                        bolt: {
-                            boltType: formData["Bolt.TensionType"] || "Pre-tensioned",
-                            holeType: formData["Bolt.Bolt_Hole_Type"] || "Standard",
-                            slipFactor: formData["Bolt.Slip_Factor"] || "0.3"
-                        }
-                    }}
-                    showMessage={false}
-                />
-            </Modal>
+                    footer={null}
+                    width={1000}
+                    bodyStyle={{ padding: 0 }}
+                    destroyOnClose
+                    maskClosable={false}
+                    centered
+                >
+                    <DesignPreferences
+                        onCancel={() => setIsDesignPreferencesVisible(false)}
+                        onSave={handleSaveDesignPreferences}
+                        initialValues={{
+                            bolt: {
+                                boltType: formData["Bolt.TensionType"] || "Pre-tensioned",
+                                holeType: formData["Bolt.Bolt_Hole_Type"] || "Standard",
+                                slipFactor: formData["Bolt.Slip_Factor"] || "0.3"
+                            }
+                        }}
+                        showMessage={false}
+                    />
+                </Modal>
 
-            {/* Add the download modal component to the layout */}
-            <Modal
-                title="Download File"
-                open={downloadModalVisible}
-                onCancel={() => setDownloadModalVisible(false)}
-                centered
-                destroyOnClose
-                maskClosable={false}
-                width={550}
-                footer={[
-                    <Button 
-                        key="cancel" 
-                        onClick={() => setDownloadModalVisible(false)}
-                        style={{
-                            background: "#555",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px"
-                        }}
-                    >
-                        Cancel
-                    </Button>,
-                    <Button 
-                        key="save" 
-                        type="primary" 
-                        onClick={handleDownload}
-                        style={{
-                            background: "#1890ff", 
-                            borderColor: "#1890ff"
-                        }}
-                    >
-                        Save
-                    </Button>
-                ]}
-                bodyStyle={{ 
-                    background: '#2d2d2d', 
-                    padding: '25px', 
-                    color: 'white',
-                    borderRadius: '5px'
-                }}
-                style={{ 
-                    top: '30%',
-                }}
-            >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
-                            Save As:
+                {/* Add the download modal component to the layout */}
+                <Modal
+                    title="Download File"
+                    open={downloadModalVisible}
+                    onCancel={() => setDownloadModalVisible(false)}
+                    centered
+                    destroyOnClose
+                    maskClosable={false}
+                    width={550}
+                    footer={[
+                        <Button 
+                            key="cancel" 
+                            onClick={() => setDownloadModalVisible(false)}
+                            style={{
+                                background: "#555",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "4px"
+                            }}
+                        >
+                            Cancel
+                        </Button>,
+                        <Button 
+                            key="save" 
+                            type="primary" 
+                            onClick={handleDownload}
+                            style={{
+                                background: "#1890ff", 
+                                borderColor: "#1890ff"
+                            }}
+                        >
+                            Save
+                        </Button>
+                    ]}
+                    bodyStyle={{ 
+                        background: '#2d2d2d', 
+                        padding: '25px', 
+                        color: 'white',
+                        borderRadius: '5px'
+                    }}
+                    style={{ 
+                        top: '30%',
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
+                                Save As:
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <Input 
+                                    value={downloadFileName}
+                                    onChange={(e) => setDownloadFileName(e.target.value)}
+                                    style={{ 
+                                        background: '#444', 
+                                        border: '1px solid #666',
+                                        borderRadius: '5px',
+                                        color: 'white',
+                                        height: '32px'
+                                    }}
+                                />
+                            </div>
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <Input 
-                                value={downloadFileName}
-                                onChange={(e) => setDownloadFileName(e.target.value)}
-                                style={{ 
-                                    background: '#444', 
-                                    border: '1px solid #666',
-                                    borderRadius: '5px',
-                                    color: 'white',
-                                    height: '32px'
-                                }}
-                            />
+                        
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
+                                Tags:
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <Input 
+                                    value={downloadTags}
+                                    onChange={(e) => setDownloadTags(e.target.value)}
+                                    style={{ 
+                                        background: '#444', 
+                                        border: '1px solid #666',
+                                        borderRadius: '5px',
+                                        color: 'white',
+                                        height: '32px'
+                                    }}
+                                    placeholder="Optional tags"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
+                                Where:
+                            </div>
+                            <div style={{ flex: 1, display: 'flex', gap: '10px' }}>
+                                <Button 
+                                    icon={<FolderOutlined />} 
+                                    style={{ 
+                                        background: '#444', 
+                                        border: '1px solid #666',
+                                        borderRadius: '5px',
+                                        color: 'white',
+                                        width: '85%',
+                                        textAlign: 'left',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {downloadLocation || 'Downloads'}
+                                </Button>
+                                <Button 
+                                    icon={<DownloadOutlined />} 
+                                    style={{ 
+                                        background: '#444', 
+                                        border: '1px solid #666',
+                                        borderRadius: '5px',
+                                        color: 'white'
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
-                            Tags:
+                </Modal>
+
+                {/* Add the Exception Modal */}
+                <Modal
+                    title={
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 24px',
+                            backgroundColor: '#141414',
+                            margin: '-20px -24px 20px',
+                            borderTopLeftRadius: '8px',
+                            borderTopRightRadius: '8px',
+                            color: '#fff',
+                            borderBottom: '1px solid #303030'
+                        }}>
+                            <span>Exception</span>
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <Button 
+                                    style={{
+                                        backgroundColor: '#141414',
+                                        color: '#fff',
+                                        border: '1px solid #303030'
+                                    }}
+                                >
+                                    Report Issue
+                                </Button>
+                                <Button 
+                                    style={{
+                                        backgroundColor: '#141414',
+                                        color: '#fff',
+                                        border: '1px solid #303030'
+                                    }}
+                                >
+                                    Save
+                                </Button>
+                            </div>
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <Input 
-                                value={downloadTags}
-                                onChange={(e) => setDownloadTags(e.target.value)}
-                                style={{ 
-                                    background: '#444', 
-                                    border: '1px solid #666',
-                                    borderRadius: '5px',
-                                    color: 'white',
-                                    height: '32px'
-                                }}
-                                placeholder="Optional tags"
-                            />
+                    }
+                    open={exceptionModalVisible}
+                    onCancel={() => setExceptionModalVisible(false)}
+                    footer={null}
+                    width={800}
+                    centered
+                    bodyStyle={{
+                        backgroundColor: '#1f1f1f',
+                        padding: '20px',
+                        color: '#fff'
+                    }}
+                    style={{
+                        backgroundColor: '#1f1f1f'
+                    }}
+                    maskStyle={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
+                    }}
+                >
+                    <div style={{
+                        backgroundColor: '#141414',
+                        padding: '20px',
+                        borderRadius: '4px',
+                        marginBottom: '20px',
+                        border: '1px solid #303030'
+                    }}>
+                        <p style={{ color: '#fff', marginBottom: '20px' }}>
+                            An unhandled exception occurred. Please report the problem using the error reporting dialog or raise the issue to github.com/osdag-admin/Osdag.
+                        </p>
+                        
+                        <div style={{ marginTop: '20px' }}>
+                            <h4 style={{ color: '#fff', marginBottom: '10px' }}>Error information:</h4>
+                            <div style={{ 
+                                borderTop: '1px solid #303030',
+                                marginTop: '10px',
+                                paddingTop: '10px',
+                                color: '#fff'
+                            }}>
+                                {new Date().toISOString().split('T')[0]}, {new Date().toLocaleTimeString()}
+                            </div>
+                            <div style={{ 
+                                borderTop: '1px solid #303030',
+                                marginTop: '10px',
+                                paddingTop: '10px',
+                                color: '#fff'
+                            }}>
+                                {'<class \'FileNotFoundError\'>:'}
+                                [Errno 2] No such file or directory: 'ResourceFiles/design_example/_build/html'
+                            </div>
+                            <div style={{
+                                marginTop: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                color: '#faad14'
+                            }}>
+                                <span>^^^^^^^^^^^^^^^^^^^^^</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{ width: '120px', textAlign: 'right', paddingRight: '20px', color: '#ccc' }}>
-                            Where:
+                </Modal>
+
+                {/* Add the Video Tutorials Modal */}
+                <Modal
+                    title={
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 24px',
+                            backgroundColor: '#141414',
+                            margin: '-20px -24px 20px',
+                            borderTopLeftRadius: '8px',
+                            borderTopRightRadius: '8px',
+                            color: '#fff',
+                            borderBottom: '1px solid #303030'
+                        }}>
+                            <span>Tutorials</span>
                         </div>
-                        <div style={{ flex: 1, display: 'flex', gap: '10px' }}>
-                            <Button 
-                                icon={<FolderOutlined />} 
+                    }
+                    open={tutorialsModalVisible}
+                    onCancel={() => setTutorialsModalVisible(false)}
+                    footer={null}
+                    width={800}
+                    centered
+                    bodyStyle={{
+                        backgroundColor: '#1f1f1f',
+                        padding: '20px',
+                        color: '#fff'
+                    }}
+                    style={{
+                        backgroundColor: '#1f1f1f'
+                    }}
+                    maskStyle={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
+                    }}
+                >
+                    <div style={{
+                        backgroundColor: '#141414',
+                        padding: '20px',
+                        borderRadius: '4px',
+                        marginBottom: '20px',
+                        border: '1px solid #303030'
+                    }}>
+                        <p style={{ color: '#fff', marginBottom: '20px' }}>
+                            Please visit:
+                        </p>
+                        
+                        <div style={{ marginTop: '20px' }}>
+                            <a 
+                                href="https://www.youtube.com/channel/" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
                                 style={{ 
-                                    background: '#444', 
-                                    border: '1px solid #666',
-                                    borderRadius: '5px',
-                                    color: 'white',
-                                    width: '85%',
-                                    textAlign: 'left',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
+                                    color: '#1890ff',
+                                    display: 'block',
+                                    marginBottom: '15px',
+                                    textDecoration: 'none'
                                 }}
                             >
-                                {downloadLocation || 'Downloads'}
-                            </Button>
-                            <Button 
-                                icon={<DownloadOutlined />} 
+                                https://www.youtube.com/channel/
+                            </a>
+                            <a 
+                                href="https://osdag.fossee.in/resources/videos" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
                                 style={{ 
-                                    background: '#444', 
-                                    border: '1px solid #666',
-                                    borderRadius: '5px',
-                                    color: 'white'
+                                    color: '#1890ff',
+                                    display: 'block',
+                                    textDecoration: 'none'
                                 }}
-                            />
+                            >
+                                https://osdag.fossee.in/resources/videos
+                            </a>
                         </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+
+                {/* Add the About Osdag Modal */}
+                <Modal
+                    title={
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 24px',
+                            backgroundColor: '#141414',
+                            margin: '-20px -24px 20px',
+                            borderTopLeftRadius: '8px',
+                            borderTopRightRadius: '8px',
+                            color: '#fff',
+                            borderBottom: '1px solid #303030'
+                        }}>
+                            <span>About Osdag</span>
+                        </div>
+                    }
+                    open={aboutModalVisible}
+                    onCancel={() => setAboutModalVisible(false)}
+                    footer={null}
+                    width={800}
+                    centered
+                    bodyStyle={{
+                        backgroundColor: '#1f1f1f',
+                        padding: '20px',
+                        color: '#fff'
+                    }}
+                    style={{
+                        backgroundColor: '#1f1f1f'
+                    }}
+                    maskStyle={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
+                    }}
+                >
+                    <div style={{
+                        backgroundColor: '#141414',
+                        padding: '20px',
+                        borderRadius: '4px',
+                        border: '1px solid #303030'
+                    }}>
+                        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start' }}>
+                            <div style={{ flex: '0 0 80px', marginRight: '20px' }}>
+                                <img 
+                                    src="/path/to/osdag-logo.png" 
+                                    alt="Osdag Logo" 
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <h1 style={{ 
+                                    color: '#fff', 
+                                    fontSize: '36px', 
+                                    margin: '0',
+                                    fontWeight: 'normal'
+                                }}>
+                                    Osdag
+                                </h1>
+                                <h2 style={{ 
+                                    color: '#fff', 
+                                    fontSize: '24px',
+                                    margin: '10px 0 0 0',
+                                    fontWeight: 'normal'
+                                }}>
+                                    Open steel design and graphics
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div style={{ color: '#fff', fontSize: '14px', lineHeight: '1.6' }}>
+                            <p style={{ marginBottom: '15px' }}>
+                                <strong>Osdag©</strong><br />
+                                <strong>Version: 2025.01.a.2</strong>
+                            </p>
+
+                            <p style={{ marginBottom: '15px' }}>
+                                Osdag is a cross-platform, free, and open-source software for the design and detailing of steel structures, following the Indian Standard IS:800-2007. Osdag is primarily built using Python other Python-based FOSS tools, such as, PyQt, OpenCascade, PythonOCC, SQLite. It allows the user to design steel connections, members and systems using a graphical user interface. The interactive GUI provides a 3D visualisation of the designed component and an option to export the CAD model to any drafting software for the creation of construction/fabrication drawings. The design is typically optimised following industry best practices. Osdag is developed by the Osdag team at IIT Bombay under the initiative of FOSSEE funded by the Ministry of Education (MoE), Government of India.
+                            </p>
+
+                            <p style={{ marginBottom: '15px' }}>
+                                This version of Osdag contains the Shear Connection modules, Moment Connection modules and the Tension Member modules.
+                            </p>
+
+                            <p style={{ marginBottom: '15px' }}>
+                                © Copyright Osdag contributors 2017.<br />
+                                This program comes with ABSOLUTELY NO WARRANTY. This is a free software, and you are welcome to redistribute it under certain conditions. See the License.txt file for details regarding the license.
+                            </p>
+
+                            <p style={{ marginBottom: '15px' }}>
+                                Authors: Osdag Team <a href="https://osdag.fossee.in/team" target="_blank" rel="noopener noreferrer" style={{ color: '#1890ff' }}>https://osdag.fossee.in/team</a><br />
+                                Visit <a href="https://osdag.fossee.in" target="_blank" rel="noopener noreferrer" style={{ color: '#1890ff' }}>https://osdag.fossee.in</a> for more information.<br />
+                                ------------------------------------------------------
+                            </p>
+
+                            <p style={{ color: '#999' }}>
+                                Osdag® and the Osdag logo are registered trademarks of Indian Institute of Technology Bombay (IIT Bombay).
+                            </p>
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Add the Ask Us a Question Modal */}
+                <Modal
+                    title={
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 24px',
+                            backgroundColor: '#141414',
+                            margin: '-20px -24px 20px',
+                            borderTopLeftRadius: '8px',
+                            borderTopRightRadius: '8px',
+                            color: '#fff',
+                            borderBottom: '1px solid #303030'
+                        }}>
+                            <span>Ask Us a Question</span>
+                        </div>
+                    }
+                    open={askQuestionModalVisible}
+                    onCancel={() => setAskQuestionModalVisible(false)}
+                    footer={null}
+                    width={800}
+                    centered
+                    bodyStyle={{
+                        backgroundColor: '#1f1f1f',
+                        padding: '20px',
+                        color: '#fff'
+                    }}
+                    style={{
+                        backgroundColor: '#1f1f1f'
+                    }}
+                    maskStyle={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)'
+                    }}
+                >
+                    <div style={{
+                        backgroundColor: '#141414',
+                        padding: '20px',
+                        borderRadius: '4px',
+                        marginBottom: '20px',
+                        border: '1px solid #303030'
+                    }}>
+                        <p style={{ color: '#fff', marginBottom: '20px' }}>
+                            Please visit:
+                        </p>
+                        
+                        <div style={{ marginTop: '20px' }}>
+                            <a 
+                                href="https://osdag.fossee.in/forum" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                style={{ 
+                                    color: '#1890ff',
+                                    display: 'block',
+                                    textDecoration: 'none'
+                                }}
+                            >
+                                https://osdag.fossee.in/forum
+                            </a>
+                        </div>
+                    </div>
+                </Modal>
         </Layout>
+        </ConfigProvider>
     );
 };
 

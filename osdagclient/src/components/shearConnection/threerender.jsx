@@ -106,11 +106,13 @@ function Model({ hasOutput = false, showMessage = true }) {
         {showMessage && window.location.pathname.includes('ColumnCoverPlateBolted') && !window.location.pathname.includes('DesignPreferences') && (
           <Html position={[0, 0, 0]}>
             <div style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+              backgroundColor: 'rgba(31, 31, 31, 0.9)',  // Dark background
               padding: '10px', 
               borderRadius: '5px',
               width: '200px',
-              textAlign: 'center'
+              textAlign: 'center',
+              color: '#fff',  // White text
+              border: '1px solid #303030'  // Dark border
             }}>
               No design output available yet.<br/>
               Click the Design button to generate a 3D model.
@@ -130,12 +132,13 @@ function Model({ hasOutput = false, showMessage = true }) {
         <FallbackModel />
         <Html position={[0, 5, 0]}>
           <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+            backgroundColor: 'rgba(31, 31, 31, 0.9)',  // Dark background
             padding: '10px', 
             borderRadius: '5px',
-            color: '#ff8800',
+            color: '#ff8800',  // Keep warning color
             width: '200px',
-            textAlign: 'center'
+            textAlign: 'center',
+            border: '1px solid #303030'  // Dark border
           }}>
             Showing simplified model.<br/>
             Actual model file could not be loaded.
@@ -152,11 +155,13 @@ function Model({ hasOutput = false, showMessage = true }) {
         <axesHelper args={[200]}/>
         <Html position={[0, 0, 0]}>
           <div style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+            backgroundColor: 'rgba(31, 31, 31, 0.9)',  // Dark background
             padding: '10px', 
             borderRadius: '5px',
             width: '200px',
-            textAlign: 'center'
+            textAlign: 'center',
+            color: '#fff',  // White text
+            border: '1px solid #303030'  // Dark border
           }}>
             Loading 3D model...
           </div>
@@ -206,18 +211,20 @@ function Model({ hasOutput = false, showMessage = true }) {
 const ThreeRender = ({ resetFlag, hasOutput = false, showMessage = true }) => {
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <Canvas style={{ background: '#f0f0f0' }}>
+      <Canvas style={{ background: '#141414' }}>  {/* Dark background for 3D viewer */}
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
         <pointLight position={[-10, -10, -10]} />
         <Suspense fallback={
           <Html center>
             <div style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+              backgroundColor: 'rgba(31, 31, 31, 0.9)',  // Dark background
               padding: '10px', 
               borderRadius: '5px',
               width: '200px',
-              textAlign: 'center'
+              textAlign: 'center',
+              color: '#fff',  // White text
+              border: '1px solid #303030'  // Dark border
             }}>
               Loading 3D viewer...
             </div>
