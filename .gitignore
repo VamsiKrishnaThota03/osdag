@@ -55,3 +55,12 @@ file_storage/company_logo/*.png
 # ignore the input values files 
 file_storage/input_values_files/*.osi
 conda_packages
+# LaTeX build artifacts (generated design reports)
+*.aux
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Frontend build output
+osdagclient/dist/
