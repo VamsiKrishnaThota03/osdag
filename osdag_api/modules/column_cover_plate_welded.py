@@ -1,311 +1,107 @@
-from osdag_api.validation_utils import validate_arr, validate_num, validate_string
-from osdag_api.errors import MissingKeyError, InvalidInputTypeError
-from osdag_api.utils import contains_keys, custom_list_validation, float_able, int_able, is_yes_or_no, validate_list_type
-import osdag_api.modules.shear_connection_common as scc
+"""
+Web API for the Column-to-Column Cover Plate Welded Connection module.
 
-# Try importing OCC using different approaches
-try:
-    from OCC.Core import BRepTools
-except ImportError:
-    try:
-        import OCC.BRepTools as BRepTools
-    except ImportError:
-        print("Warning: OCC module not found. CAD functionality will be limited.")
-        class DummyBRepTools:
-            class breptools:
-                @staticmethod
-                def Write(*args, **kwargs):
-                    print("CAD export not available - OCC module missing")
-                    return "dummy_path.brep"
-        BRepTools = DummyBRepTools
-
-from cad.common_logic import CommonDesignLogic
-# Will log a lot of unnecessary data.
-from design_type.connection.column_cover_plate import ColumnCoverPlate  # Reusing the same base class
-import sys
+Runs the upstream Osdag design (design_type.connection.column_cover_plate_weld)
+on the submitted inputs and returns its real outputs and design log.
+CAD generation needs pythonOCC and is only attempted when it is installed.
+"""
 import os
-import typing
-from typing import Dict, Any, List
-old_stdout = sys.stdout  # Backup log
-sys.stdout = open(os.devnull, "w")  # redirect stdout
-sys.stdout = old_stdout  # Reset log
+from typing import Any, Dict, List, Tuple
+
+# Import the design module before Common: Common has a circular import with utils.common.
+from design_type.connection import column_cover_plate_weld as design_module
+from design_type.connection.column_cover_plate_weld import ColumnCoverPlateWeld
+from Common import KEY_DISP_COLUMNCOVERPLATEWELD
+from osdag_api.errors import InvalidInputTypeError, OsdagApiException
+import osdag_api.modules.column_cover_plate_common as ccp
+
+MODULE_NAME = KEY_DISP_COLUMNCOVERPLATEWELD  # 'Column-to-Column Cover Plate Welded Connection'
+
+DEFAULTS = {
+    "Connector.Flange_Plate.Preferences": "Outside",
+    "Weld.Type": "Fillet Weld",
+    "Load.Axial": "",
+    "Load.Moment": "",
+    "Load.Shear": "",
+}
+
+OUTPUT_SECTIONS = [
+    "output_values",
+    "member_capacityoutput",
+    "flangecapacity",
+    "webcapacity",
+    "flange_weld_details",
+    "web_weld_details",
+]
 
 
 def get_required_keys() -> List[str]:
     return [
-        "Connectivity",
+        "Connector.Flange_Plate.Preferences",
+        "Connector.Flange_Plate.Thickness_list",
         "Connector.Material",
+        "Connector.Web_Plate.Thickness_List",
         "Design.Design_Method",
-        "Detailing.Corrosive_Influences",
         "Detailing.Gap",
-        "Load.Axial",
-        "Load.Moment",
-        "Load.Shear",
         "Material",
-        "Member.Supported_Section.Designation",
-        "Member.Supported_Section.Material",
-        "Member.Supporting_Section.Designation",
-        "Member.Supporting_Section.Material",
-        "Module",
+        "Member.Designation",
+        "Member.Material",
         "Weld.Fab",
         "Weld.Material_Grade_OverWrite",
-        "Weld.Size",
-        "Connector.Flange_Plate.Thickness_List",
-        "Connector.Web_Plate.Thickness_List",
     ]
 
 
+def to_design_input(input_values: Dict[str, Any]) -> Dict[str, Any]:
+    return ccp.normalise_input(input_values, MODULE_NAME, DEFAULTS)
+
+
 def validate_input(input_values: Dict[str, Any]) -> None:
-    """Validate type for all values in design dict. Raise error when invalid"""
-
-    # Check if all required keys exist
-    required_keys = get_required_keys()
-    # Check if input_values contains all required keys.
-    missing_keys = contains_keys(input_values, required_keys)
-    if missing_keys != None:  # If keys are missing.
-        # Raise error for the first missing key.
-        raise MissingKeyError(missing_keys[0])
-
-    # Validate Connectivity
-    # Check if Connectivity is a string.
-    if not isinstance(input_values["Connectivity"], str):
-        # If not, raise error.
-        raise InvalidInputTypeError("Connectivity", "str")
-
-    # Validate Connector.Material
-    # Check if Connector.Material is a string.
-    if not isinstance(input_values["Connector.Material"], str):
-        # If not, raise error.
-        raise InvalidInputTypeError("Connector.Material", "str")
-
-    # Validate Design.Design_Method
-    # Check if Design.Design_Method is a string.
-    if not isinstance(input_values["Design.Design_Method"], str):
-        # If not, raise error.
-        raise InvalidInputTypeError("Design.Design_Method", "str")
-
-    # Validate Detailing.Corrosive_Influences
-    # Check if Detailing.Corrosive_Influences is 'Yes' or 'No'.
-    if not is_yes_or_no(input_values["Detailing.Corrosive_Influences"]):
-        # If not, raise error.
-        raise InvalidInputTypeError(
-            "Detailing.Corrosive_Influences", "'Yes' or 'No'")
-
-    # Validate Detailing.Gap
-    detailing_gap = input_values["Detailing.Gap"]
-    if (not isinstance(detailing_gap, str)  # Check if Detailing.Gap is a string.
-            or not int_able(detailing_gap)):  # Check if Detailing.Gap can be converted to int.
-        # If any of these conditions fail, raise error.
-        raise InvalidInputTypeError(
-            "Detailing.Gap", "str where str can be converted to int")
-
-    # Validate Load.Axial
-    load_axial = input_values["Load.Axial"]
-    if (not isinstance(load_axial, str)  # Check if Load.Axial is a string.
-            or not int_able(load_axial)):  # Check if Load.Axial can be converted to int.
-        # If any of these conditions fail, raise error.
-        raise InvalidInputTypeError(
-            "Load.Axial", "str where str can be converted to int")
-
-    # Validate Load.Moment
-    load_moment = input_values["Load.Moment"]
-    if (not isinstance(load_moment, str)  # Check if Load.Moment is a string.
-            or not int_able(load_moment)):  # Check if Load.Moment can be converted to int.
-        # If any of these conditions fail, raise error.
-        raise InvalidInputTypeError(
-            "Load.Moment", "str where str can be converted to int")
-
-    # Validate Load.Shear
-    load_shear = input_values["Load.Shear"]
-    if (not isinstance(load_shear, str)  # Check if Load.Shear is a string.
-            or not int_able(load_shear)):  # Check if Load.Shear can be converted to int.
-        # If any of these conditions fail, raise error.
-        raise InvalidInputTypeError(
-            "Load.Shear", "str where str can be converted to int")
-
-    # Validate Material
-    # Check if Material is a string.
-    if not isinstance(input_values["Material"], str):
-        raise InvalidInputTypeError("Material", "str")  # If not, raise error.
-
-    # Validate Member.Supported_Section.Designation
-    # Check if Member.Supported_Section.Designation is a string.
-    if not isinstance(input_values["Member.Supported_Section.Designation"], str):
-        # If not, raise error.
-        raise InvalidInputTypeError(
-            "Member.Supported_Section.Designation", "str")
-
-    # Validate Member.Supported_Section.Material
-    # Check if Member.Supported_Section.Material is a string.
-    if not isinstance(input_values["Member.Supported_Section.Material"], str):
-        # If not, raise error.
-        raise InvalidInputTypeError("Member.Supported_Section.Material", "str")
-
-    # Validate Member.Supporting_Section.Designation
-    # Check if Member.Supporting_Section.Designation is a string.
-    if not isinstance(input_values["Member.Supporting_Section.Designation"], str):
-        # If not, raise error.
-        raise InvalidInputTypeError(
-            "Member.Supporting_Section.Designation", "str")
-
-    # Validate Member.Supporting_Section.Material
-    # Check if Member.Supporting_Section.Material is a string.
-    if not isinstance(input_values["Member.Supporting_Section.Material"], str):
-        # If not, raise error.
-        raise InvalidInputTypeError(
-            "Member.Supporting_Section.Material", "str")
-
-    # Validate Module
-    # Check if Module is a string.
-    if not isinstance(input_values["Module"], str):
-        raise InvalidInputTypeError("Module", "str")  # If not, raise error.
-
-    # Validate Weld.Fab
-    # Check if Weld.Fab is a string.
-    if not isinstance(input_values["Weld.Fab"], str):
-        raise InvalidInputTypeError("Weld.Fab", "str")  # If not, raise error.
-
-    # Validate Weld.Material_Grade_OverWrite
-    weld_materialgradeoverwrite = input_values["Weld.Material_Grade_OverWrite"]
-    if (not isinstance(weld_materialgradeoverwrite, str)  # Check if Weld.Material_Grade_OverwWite is a string.
-            or not int_able(weld_materialgradeoverwrite)):  # Check if Weld.Material_Grade_OverWrite can be converted to int.
-        # If any of these conditions fail, raise error.
-        raise InvalidInputTypeError(
-            "Weld.Material_Grade_OverWrite", "str where str can be converted to int.")
-            
-    # Validate Weld.Size
-    weld_size = input_values["Weld.Size"]
-    if (not isinstance(weld_size, str)  # Check if Weld.Size is a string.
-            or not int_able(weld_size)):  # Check if Weld.Size can be converted to int.
-        # If any of these conditions fail, raise error.
-        raise InvalidInputTypeError(
-            "Weld.Size", "str where str can be converted to int.")
-
-    # Validate Connector.Flange_Plate.Thickness_List
-    flange_plate_thicknesslist = input_values["Connector.Flange_Plate.Thickness_List"]
-    if (not isinstance(flange_plate_thicknesslist, list)  # Check if list.
-            # Check if all items are str.
-            or not validate_list_type(flange_plate_thicknesslist, str)
-            or not custom_list_validation(flange_plate_thicknesslist, int_able)):  # Check if all items can be converted to int.
-        raise InvalidInputTypeError(
-            "Connector.Flange_Plate.Thickness_List", "List[str] where all items can be converted to int")
-
-    # Validate Connector.Web_Plate.Thickness_List
-    web_plate_thicknesslist = input_values["Connector.Web_Plate.Thickness_List"]
-    if (not isinstance(web_plate_thicknesslist, list)  # Check if list.
-            # Check if all items are str.
-            or not validate_list_type(web_plate_thicknesslist, str)
-            or not custom_list_validation(web_plate_thicknesslist, int_able)):  # Check if all items can be converted to int.
-        raise InvalidInputTypeError(
-            "Connector.Web_Plate.Thickness_List", "List[str] where all items can be converted to int")
+    """Raise MissingKeyError / InvalidInputTypeError for unusable input."""
+    design = to_design_input(input_values)
+    ccp.check_required(design, get_required_keys())
+    for key in ("Connector.Flange_Plate.Thickness_list", "Connector.Web_Plate.Thickness_List"):
+        if not isinstance(design[key], list):
+            raise InvalidInputTypeError(key, "non-empty list of strings")
 
 
-def create_module() -> ColumnCoverPlate:
-    """Create an instance of the Column Cover Plate Welded connection module design class and set it up for use"""
-    module = ColumnCoverPlate()  # Create an instance of the ColumnCoverPlate
-    module.set_osdaglogger(None)
-    return module
-
-
-def create_from_input(input_values: Dict[str, Any]) -> ColumnCoverPlate:
-    """Create an instance of the Column Cover Plate Welded connection module design class from input values."""
+def create_from_input(input_values: Dict[str, Any]):
+    """Run the design and return the design state (a ColumnCoverPlateWeld subclass) and its logs."""
     validate_input(input_values)
-    try:
-        module = create_module()  # Create module instance.
-    except Exception as e:
-        print('e in create_module : ', e)
-        print('error in creating module')
-    
-    # Set the input values on the module instance.
-    try:
-        # Add connection type as welded
-        input_values["Connection"] = "Welded"
-        module.set_input_values(input_values)
-    except Exception as e:
-        print('e in set_input_values : ', e)
-        print('error in setting the input values')
-
-    return module
+    return ccp.run_design(design_module, ColumnCoverPlateWeld, to_design_input(input_values))
 
 
-def generate_output(input_values: Dict[str, Any]) -> Dict[str, Any]:
+def generate_output(input_values: Dict[str, Any]) -> Tuple[Dict[str, Any], List[Dict[str, str]]]:
     """
-    Generate, format and return the input values from the given output values.
-    Output format (json): {
-        "Weld.Size": {
-            "key": "Weld.Size",
-            "label": "Weld Size (mm)",
-            "value": "6"
-        }
-    }
+    Return ({key: {"key", "label", "value"}}, logs) for the given inputs.
+    Raises OsdagApiException for invalid input and ccp.DesignError if the design code fails.
     """
-    output = {}  # Dictionary for formatted values
-    module = create_from_input(input_values)  # Create module from input.
-    
-    # Generate output values in unformatted form.
-    raw_output_text = module.output_values(True)
-    raw_output_spacing = module.spacing(True)  # Generate output val
-    raw_output_capacities = module.capacities(True)
-    raw_output_weld_capacity = module.weld_capacity_details(True) if hasattr(module, 'weld_capacity_details') else []
-    logs = module.logs
-    
-    raw_output = raw_output_capacities + raw_output_spacing + raw_output_text + raw_output_weld_capacity
-    
-    # Loop over all the text values and add them to output dict.
-    for param in raw_output:
-        if param[2] == "TextBox":  # If the parameter is a text output,
-            key = param[0]  # id/key
-            label = param[1]  # label text.
-            value = param[3]  # Value as string.
-            output[key] = {
-                "key": key,
-                "label": label,
-                "value": value
-            }  # Set label, key and value in output
+    run_cls, logs = create_from_input(input_values)
+    output = ccp.collect_output(run_cls, OUTPUT_SECTIONS)
+    if not getattr(run_cls, "design_status", False) and not any(log["type"] == "ERROR" for log in logs):
+        logs.append({"type": "ERROR", "msg": "Design is unsafe or could not be completed for these inputs."})
     return output, logs
 
 
 def create_cad_model(input_values: Dict[str, Any], section: str, session: str) -> str:
-    """Generate the CAD model from input values as a BREP file. Return file path."""
-    if section not in ("Model", "Beam", "Column", "Plate"):  # Error checking: If section is valid.
-        raise InvalidInputTypeError(
-            "section", "'Model', 'Beam', 'Column' or 'Plate'")
-    module = create_from_input(input_values)  # Create module from input.
-    
-    # Object that will create the CAD model.
-    try:
-        cld = CommonDesignLogic(None, '', module.module, module.mainmodule)
-    except Exception as e:
-        print('error in cld e : ', e)
-    
-    try:
-        # Setup the calculations object for generating CAD model.
-        scc.setup_for_cad(cld, module)
-    except Exception as e:
-        print('Error in setting up cad e : ', e)
+    """Generate the CAD model as a BREP file and return its path. Requires pythonOCC."""
+    from osdag_api import CAD_FUNCTIONALITY_AVAILABLE
+    if not CAD_FUNCTIONALITY_AVAILABLE:
+        raise OsdagApiException("3D CAD needs pythonOCC, which is not installed on this server.")
+    if section not in ("Model", "Column", "Cover Plate"):
+        raise InvalidInputTypeError("section", "'Model', 'Column' or 'Cover Plate'")
 
-    # The section of the module that will be generated.
+    from OCC.Core import BRepTools  # imported lazily: optional dependency
+    from cad.common_logic import CommonDesignLogic
+
+    run_cls, _ = create_from_input(input_values)
+    cld = CommonDesignLogic(None, '', MODULE_NAME, "Moment Connection")
+    cld.module_class = run_cls
+    cld.CPObj = cld.createCCCoverPlateCAD()
     cld.component = section
-    
-    try:
-        model = cld.create2Dcad()  # Generate CAD Model.
-    except Exception as e:
-        print('Error in cld.create2Dcad() e : ', e)
-        return False
+    model = cld.create2Dcad()
 
-    # check if the cad_models folder exists or not 
-    # if no, then create one 
-    if(not os.path.exists(os.path.join(os.getcwd(), "file_storage/cad_models/"))):
-        print('path does not exists cad_models, creating one')
-        os.mkdir(os.path.join(os.getcwd(), "file_storage/cad_models/"))
-      
-    # os.system("clear")  # clear the terminal
-    file_name = session + "_" + section + ".brep"
-    file_path = "file_storage/cad_models/" + file_name
-    
-    try:
-        BRepTools.breptools.Write(model, file_path) # Generate CAD Model
-    except Exception as e:
-        print('Writing to BREP file failed e : ', e)
-    
-    return file_path 
+    folder = os.path.join(os.getcwd(), "file_storage", "cad_models")
+    os.makedirs(folder, exist_ok=True)
+    file_path = os.path.join("file_storage", "cad_models", f"{session}_{section.replace(' ', '_')}.brep")
+    BRepTools.breptools.Write(model, file_path)
+    return file_path

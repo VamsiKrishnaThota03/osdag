@@ -10,11 +10,12 @@ class Design(models.Model):
     """Design Session object in Database."""
     cookie_id = models.CharField(unique=True, max_length=32)
     module_id = models.CharField(max_length=200)
-    input_values = models.JSONField(blank=True)
-    logs = models.TextField(blank=True)
-    output_values = models.JSONField(blank=True)
-    design_status = models.BooleanField(blank=True)
-    cad_design_status = models.BooleanField(blank=True)
+    # Defaults let a session be created before any input or output exists.
+    input_values = models.JSONField(blank=True, default=dict)
+    logs = models.TextField(blank=True, default='')
+    output_values = models.JSONField(blank=True, default=dict)
+    design_status = models.BooleanField(blank=True, default=False)
+    cad_design_status = models.BooleanField(blank=True, default=False)
     
     class Meta : 
         db_table = "Design"

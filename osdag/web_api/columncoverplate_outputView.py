@@ -1,157 +1,83 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.parsers import JSONParser
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+"""
+Output API for the Column-to-Column Cover Plate modules.
+
+POST /calculate-output/Column-Cover-Plate-Bolted
+POST /calculate-output/Column-Cover-Plate-Welded
+
+Body: the module's input values (JSON). Requires the module's session cookie
+(created by POST /sessions/create with the module_id).
+
+Response: {"data": {key: {key, label, value}}, "logs": [{type, msg}],
+           "success": <design is safe>, "cad_available": <pythonOCC installed>}
+"""
+import logging
+
 from django.http import JsonResponse
-from osdag_api import get_module_api, CAD_FUNCTIONALITY_AVAILABLE
-from django.http import HttpResponse, HttpRequest
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.views import APIView
 
-# importing from DRF
-from rest_framework.response import Response
-from rest_framework import status
-
-# importing models
-from osdag.models import Columns, Beams, Bolt, Bolt_fy_fu, Material
 from osdag.models import Design
+from osdag_api import CAD_FUNCTIONALITY_AVAILABLE, get_module_api
+from osdag_api.errors import OsdagApiException
+from osdag_api.modules.column_cover_plate_common import DesignError
 
-# importing serializers
-from osdag.serializers import Design_Serializer
+logger = logging.getLogger(__name__)
+
+
+def _logs_to_text(logs):
+    return "".join(f"{log['type'].upper()} : {log['msg']}\n" for log in logs)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
-class ColumnCoverPlateBoltedOutputData(APIView):
+class ColumnCoverPlateOutputBase(APIView):
+    module_id = None
+    cookie_key = None
 
     def post(self, request):
-        print("Inside post method of ColumnCoverPlateBolted OutputData")
+        cookie_id = request.COOKIES.get(self.cookie_key)
+        design = Design.objects.filter(cookie_id=cookie_id).first() if cookie_id else None
+        if design is None:
+            return self._error(400, "No design session found. Reopen the module to start a new session.")
 
-        # Check if CAD functionality is available
-        if not CAD_FUNCTIONALITY_AVAILABLE:
-            print("Warning: CAD functionality is disabled. Proceeding with limited functionality.")
-            # We'll continue with limited functionality instead of stopping completely
-            # This allows users to at least see the interface and input data
-            # Add a warning to the logs that will be displayed to the user
-            warning_logs = [
-                {"type": "WARNING", "msg": "The OCC module is missing. 3D model generation and some calculation features will be limited."},
-                {"type": "INFO", "msg": "You can continue using the application with limited functionality."}
-            ]
-            # We'll set an empty output dictionary and continue
-            # This is better than returning an error immediately
-            return JsonResponse({
-                "data": {},
-                "logs": warning_logs,
-                "success": True  # Changed to True so the interface still loads
-            }, safe=False, status=200)  # Changed to 200 OK
-
-        # obtaining the session, module_id, input_values
-        cookie_id = request.COOKIES.get('column_cover_plate_bolted_session')
-        module_api = get_module_api('Column Cover Plate Bolted')
         input_values = request.data
-        tempData = {
-            'cookie_id': cookie_id,
-            'module_id': 'Column Cover Plate Bolted',
-            'input_values': input_values
-        }
-        print('tempData : ', tempData)
-        print('type of input_values : ', type(input_values))
-        # obtaining the record from the Design model
-        designRecord = Design.objects.get(cookie_id=cookie_id)
-        serailizer = Design_Serializer(designRecord, data=tempData)
+        if not isinstance(input_values, dict):
+            return self._error(400, "Input values must be a JSON object.")
 
-        # checking the validtity of the serializer
-        if serailizer.is_valid():
-            print('serializer is valid')
-            try:  # try saving the serializer
-                serailizer.save()
-                print('serializer saved')
-            except Exception as e:
-                print('Error in saving the serializer:', e)
-                return Response('Error in saving the serializer', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        else:
-            print('serializer is invalid')
-            return Response('Serializer is invalid', status=status.HTTP_400_BAD_REQUEST)
-
-        output = {}
-        logs = []
-        new_logs = []
         try:
-            try:
-                output, logs = module_api.generate_output(input_values)
-            except Exception as e: 
-                print('e : ', e)
-                print('Error in generating the output and logs')
-            
-            for log in logs:
-                # removing duplicates
-                if log not in new_logs:
-                    new_logs.append(log)
+            output, logs = get_module_api(self.module_id).generate_output(input_values)
+        except OsdagApiException as exc:
+            return self._error(400, str(exc))
+        except DesignError as exc:
+            logger.warning("%s design failed: %s", self.module_id, exc)
+            return self._error(422, "The design could not be completed for these inputs. Check that the "
+                                    "section designation and materials exist in the Osdag database. (" + str(exc) + ")")
 
-        except Exception as e:
-            print('Exception raised : ', e)
-            return JsonResponse({"data": {}, "logs": new_logs,
-                                "success": False}, safe=False, status=400)
-        
-        print('new_logs : ', new_logs)
-        print('type of new_logs : ', type(new_logs))
-        finalLogsString = self.combine_logs(new_logs)
+        design_status = bool(output) and not any(log["type"] == "ERROR" for log in logs)
+        design.input_values = input_values
+        design.output_values = output
+        design.logs = _logs_to_text(logs)
+        design.design_status = design_status
+        design.save()
 
-        try: 
-            # save the logs, output, design_status in the Design table for that specific cookie_id
-            designObject = Design.objects.get(cookie_id=cookie_id)
-            designObject.logs = finalLogsString
-            designObject.output_values = output
-            print('output outside the condition  : ', output)
-            output_result = self.check_non_zero_output(output)
-            print('output_result : ', output_result)
+        if not CAD_FUNCTIONALITY_AVAILABLE:
+            logs = logs + [{"type": "INFO",
+                            "msg": "3D model not generated: pythonOCC is not installed on this server."}]
 
-            if output == "" or output == 0 or output_result is False:
-                print('output is empty string or output_result is False')
-                print('output : ', output)
-                designObject.design_status = False
-            else: 
-                print('output is true')
-                # if the output is successfully generated, then set the design_status to True 
-                designObject.design_status = True
+        return JsonResponse({
+            "data": output,
+            "logs": logs,
+            "success": design_status,
+            "cad_available": CAD_FUNCTIONALITY_AVAILABLE,
+        }, status=200)
 
-            designObject.save()
-        except Exception as e: 
-            print('Error in saving the logs in Design table : ', e)
-            return JsonResponse({"data": {}, "logs": new_logs,
-                               "success": False}, safe=False, status=500)
+    @staticmethod
+    def _error(status, message):
+        return JsonResponse({"data": {}, "logs": [{"type": "ERROR", "msg": message}],
+                             "success": False, "cad_available": CAD_FUNCTIONALITY_AVAILABLE},
+                            status=status)
 
-        return JsonResponse({"data": output, "logs": new_logs, "success": True}, safe=False, status=201)
-    
-    
-    def combine_logs(self, logs): 
-        # the logs here is an array of objects 
-        # this function extracts the objects to string and combines them into a single string 
-        # also converting the type key value to upper case 
-        finalLogsString = ""
 
-        for item in logs: 
-            print('item : ', item)
-            print('item.keys : ', item.keys())
-            if 'type' in item:
-                item['type'] = item['type'].upper()
-                msg = item['msg']
-                finalLogsString = finalLogsString + item['type'] + " : " + msg + '\n'
-            else:
-                msg = item['msg']
-                finalLogsString = finalLogsString + msg + '\n'
-
-        print('finalLogsString : ', finalLogsString)
-        return finalLogsString 
-
-    def check_non_zero_output(self, output): 
-        flag = False
-        for item in output: 
-            # comparing the float values 
-            try:
-                if(abs(float(output[item]['value']) - 0.0) > 1e-9): 
-                    flag = True
-                    break
-            except (ValueError, TypeError):
-                continue
-        
-        return flag 
+class ColumnCoverPlateBoltedOutputData(ColumnCoverPlateOutputBase):
+    module_id = 'Column Cover Plate Bolted'
+    cookie_key = 'column_cover_plate_bolted_session'
