@@ -137,5 +137,5 @@ def collect_output(run_cls, sections: List[str]) -> Dict[str, Dict[str, Any]]:
             for row in rows or []:
                 if len(row) > 3 and row[2] == "TextBox" and row[0]:
                     key = row[0] if row[0] not in output else f"{name}.{row[0]}"
-                    output[key] = {"key": key, "label": row[1], "value": row[3]}
+                    output[key] = {"key": key, "label": row[1], "value": row[3], "section": name}
     return output

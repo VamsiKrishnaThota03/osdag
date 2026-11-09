@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import Variable from '../Variable';
 import { Table, Modal, Button, Layout, Menu, Select, Radio, Input, Space, Divider, Dropdown, notification, Checkbox, Row, Col, ConfigProvider, theme } from 'antd';
 import ColumnSectionModal from './ColumnSectionModal';
@@ -11,7 +10,7 @@ import DesignSectionModal from './DesignSectionModal';
 import OutputDock from './OutputDock';
 import ConnectorSectionModal from "./ConnectorSectionModal";
 import CustomSectionModal from "./CustomSectionModal";
-import ThreeRender from './shearConnection/threerender';
+import ColumnCoverPlateViewer from './ColumnCoverPlateViewer';
 import { UserContext } from '../context/UserState';
 import { FileTextOutlined, SaveOutlined, FileOutlined, EditOutlined, DatabaseOutlined, QuestionOutlined, SettingOutlined, DownOutlined, FolderOutlined, DownloadOutlined } from '@ant-design/icons';
 import ErrorBoundary from './ErrorBoundary';
@@ -288,7 +287,16 @@ const ColumnCoverPlateBolted = () => {
     const [resetFlag, setResetFlag] = useState(false);
     const [output, setOutput] = useState(null);
     const [logs, setLogs] = useState([]);
-    const [modelGenerated, setModelGenerated] = useState(false);
+    const [cadAvailable, setCadAvailable] = useState(false);
+    // Which output detail table (capacities, spacing) is open.
+    const [detail, setDetail] = useState(null);
+    const outputValue = (key) => {
+        const value = output?.[key]?.value;
+        return value === undefined || value === null ? '' : String(value);
+    };
+    const detailRows = detail && output
+        ? Object.values(output).filter((item) => item.section === detail.section)
+        : [];
     const [formData, setFormData] = useState({
         "Bolt.Bolt_Hole_Type": "Standard",
         "Bolt.Diameter": ["12", "16", "20", "24", "30"],
@@ -357,9 +365,8 @@ const ColumnCoverPlateBolted = () => {
     // Create session function
     const createSession = async () => {
         try {
-            const response = await axios.get(`${baseUrl}/sessions/create`);
-            const sessionId = response.data;
-            Cookies.set('column_cover_plate_bolted_session', sessionId);
+            // The backend sets the column_cover_plate_bolted_session cookie.
+            await axios.post(`${baseUrl}/sessions/create`, { module_id: 'Column Cover Plate Bolted' }, { withCredentials: true });
         } catch (error) {
             console.error('Error creating session:', error);
         }
@@ -367,10 +374,11 @@ const ColumnCoverPlateBolted = () => {
 
     // Handle form input changes
     const handleInputChange = (name, value) => {
-        setFormData({
-            ...formData,
+        // Functional update: several fields are often changed in a row.
+        setFormData((prev) => ({
+            ...prev,
             [name]: value,
-        });
+        }));
     };
 
     // Save input data function
@@ -403,14 +411,8 @@ const ColumnCoverPlateBolted = () => {
         setLoading(true);
         setOutput(null);
         setLogs([]);
-        setModelGenerated(false);
 
         try {
-            const sessionId = Cookies.get('column_cover_plate_bolted_session');
-            if (!sessionId) {
-                throw new Error('No session ID found');
-            }
-
             // Send data for calculation
             const response = await axios.post(`${baseUrl}/calculate-output/Column-Cover-Plate-Bolted`, formData, {
                 headers: {
@@ -419,77 +421,40 @@ const ColumnCoverPlateBolted = () => {
                 withCredentials: true,
             });
 
-            // Always display logs if they exist
-            if (response.data.logs && response.data.logs.length > 0) {
-                setLogs(response.data.logs);
+            const { data = {}, logs: responseLogs = [], success, cad_available: cadOnServer } = response.data;
+            setLogs(responseLogs);
+            setCadAvailable(Boolean(cadOnServer));
+            if (data && Object.keys(data).length > 0) {
+                setOutput(data);
             }
 
-            if (response.data.success) {
-                // Set output data if it exists
-                if (response.data.data && Object.keys(response.data.data).length > 0) {
-                setOutput(response.data.data);
-                    
-                    // Check if model was generated or can be generated
-                    const canShowModel = !response.data.logs.some(log => 
-                        log.type === 'ERROR' && 
-                        (log.msg.includes('3D') || log.msg.includes('model') || log.msg.includes('visualization'))
-                    );
-                    
-                    if (canShowModel) {
-                        // Try to generate 3D model
-                        try {
-                            await generateCAD("complete");
-                            setModelGenerated(true);
-                        } catch (modelError) {
-                            console.error('Error generating 3D model:', modelError);
-                            setLogs(prevLogs => [
-                                ...prevLogs, 
-                                { type: 'WARNING', msg: 'Failed to generate 3D model. The visualization may not be available.' }
-                            ]);
-                        }
-                    } else {
-                        console.log('3D model generation skipped due to errors in response logs');
-                        setLogs(prevLogs => [
-                            ...prevLogs, 
-                            { type: 'INFO', msg: '3D visualization is not available for this design.' }
-                        ]);
-                    }
-                    
+            if (success) {
                 notification.success({
-                    message: 'Success',
-                    description: 'Output generated successfully',
+                    message: 'Design complete',
+                    description: 'The connection is safe for the given inputs.',
                 });
             } else {
-                    // Handle case where data is empty but success is true (limited functionality mode)
-                    notification.info({
-                        message: 'Limited Functionality',
-                        description: 'The application is running in limited functionality mode',
-                    });
-                }
-            } else {
                 notification.warning({
-                    message: 'Warning',
-                    description: 'Could not generate output. Check the logs for details.',
+                    message: 'Design is not safe',
+                    description: 'See the log below for the checks that failed.',
                 });
             }
         } catch (error) {
             console.error('Error generating output:', error);
+            const serverLogs = error.response && error.response.data && error.response.data.logs;
             let errorMessage = 'An error occurred while generating output';
-            
-            // Try to extract more specific error message if available
-            if (error.response && error.response.data) {
-                errorMessage = error.response.data.message || errorMessage;
+            if (serverLogs && serverLogs.length > 0) {
+                errorMessage = serverLogs[0].msg;
+            } else if (!error.response) {
+                errorMessage = 'Could not reach the Osdag server. Is the backend running?';
             }
-            
+
             notification.error({
-                message: 'Error',
+                message: 'Design failed',
                 description: errorMessage,
             });
-            
-            // Add error to logs for display
-            setLogs([
-                { type: 'ERROR', msg: errorMessage }
-            ]);
+
+            setLogs(serverLogs && serverLogs.length > 0 ? serverLogs : [{ type: 'ERROR', msg: errorMessage }]);
         } finally {
             setLoading(false);
         }
@@ -526,31 +491,7 @@ const ColumnCoverPlateBolted = () => {
         });
         setOutput(null);
         setLogs([]);
-        setModelGenerated(false);
         setResetFlag(!resetFlag);
-    };
-
-    // Generate CAD model
-    const generateCAD = async (section) => {
-        try {
-            const sessionId = Cookies.get('column_cover_plate_bolted_session');
-            await axios.post(`${baseUrl}/design/cad`, {
-                input_values: formData,
-                section: section,
-                session: sessionId
-            });
-            
-            notification.success({
-                message: 'Success',
-                description: `CAD model for ${section} generated successfully`,
-            });
-        } catch (error) {
-            console.error('Error generating CAD model:', error);
-            notification.error({
-                message: 'Error',
-                description: 'Failed to generate CAD model',
-            });
-        }
     };
 
     // Generate report
@@ -752,28 +693,28 @@ const ColumnCoverPlateBolted = () => {
                 console.log("Showing column download dialog");
                 setDownloadType('Column');
                 setDownloadFileName('Column_Details');
-                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadLocation('Downloads');
                 setDownloadModalVisible(true);
                 break;
             case 'download-beam':
                 console.log("Showing beam download dialog");
                 setDownloadType('Beam');
                 setDownloadFileName('Beam_Details');
-                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadLocation('Downloads');
                 setDownloadModalVisible(true);
                 break;
             case 'download-angle':
                 console.log("Showing angle download dialog");
                 setDownloadType('Angle');
                 setDownloadFileName('Angle_Details');
-                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadLocation('Downloads');
                 setDownloadModalVisible(true);
                 break;
             case 'download-channel':
                 console.log("Showing channel download dialog");
                 setDownloadType('Channel');
                 setDownloadFileName('Channel_Details');
-                setDownloadLocation(process.env.HOME || process.env.USERPROFILE || 'Downloads');
+                setDownloadLocation('Downloads');
                 setDownloadModalVisible(true);
                 break;
             default:
@@ -1500,11 +1441,7 @@ const ColumnCoverPlateBolted = () => {
                                     </div>
                                     <div style={styles.viewerContainer}>
                                         <ErrorBoundary>
-                                            <ThreeRender 
-                                                resetFlag={resetFlag}
-                                                hasOutput={modelGenerated}
-                                                showMessage={true}
-                                            />
+                                            <ColumnCoverPlateViewer hasOutput={Boolean(output)} cadAvailable={cadAvailable} />
                                         </ErrorBoundary>
                                     </div>
                                     <div style={styles.logConsole}>
@@ -1536,7 +1473,7 @@ const ColumnCoverPlateBolted = () => {
                                             {/* Member Capacity Section */}
                                             <div style={{ marginBottom: '20px' }}>
                                                 <div style={styles.outputSectionHeader}>Member Capacity</div>
-                                                <Button style={styles.outputButton}>
+                                                <Button style={styles.outputButton} disabled={!output} onClick={() => setDetail({ title: 'Member Capacity', section: 'member_capacityoutput' })}>
                                                     Member Capacity
                 </Button>
                                             </div>
@@ -1547,7 +1484,7 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Diameter (mm)</div>
                                                     <Input
-                                                        value={output?.["Bolt.Diameter"]?.value || ""}
+                                                        value={outputValue("Bolt.Diameter")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
@@ -1555,17 +1492,17 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Property Class *</div>
                                                     <Input
-                                                        value={output?.["Bolt.Grade"]?.value || ""}
+                                                        value={outputValue("Bolt.Grade_Provided")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
                                                 </div>
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Bolt Capacities</div>
-                                                    <Button style={styles.outputButton}>
+                                                    <Button style={styles.outputButton} disabled={!output} onClick={() => setDetail({ title: 'Flange Bolt Capacity', section: 'flange_bolt_capacity' })}>
                                                         Flange Bolt Capacity
                 </Button>
-                                                    <Button style={styles.outputButton}>
+                                                    <Button style={styles.outputButton} disabled={!output} onClick={() => setDetail({ title: 'Web Bolt Capacity', section: 'web_bolt_capacity' })}>
                                                         Web Bolt Capacity
                 </Button>
                                                 </div>
@@ -1577,7 +1514,7 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Height (mm)</div>
                                                     <Input
-                                                        value={output?.["WebPlate.Height"]?.value || ""}
+                                                        value={outputValue("Web_Plate.Height (mm)")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
@@ -1585,7 +1522,7 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Width (mm)</div>
                                                     <Input
-                                                        value={output?.["WebPlate.Width"]?.value || ""}
+                                                        value={outputValue("Web_Plate.Width")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
@@ -1593,20 +1530,20 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Thickness (mm) *</div>
                                                     <Input
-                                                        value={output?.["WebPlate.Thickness"]?.value || ""}
+                                                        value={outputValue("Connector.Web_Plate.Thickness_List")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
                                                 </div>
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Spacing (mm)</div>
-                                                    <Button style={styles.outputButton}>
+                                                    <Button style={styles.outputButton} disabled={!output} onClick={() => setDetail({ title: 'Web Spacing Details', section: 'webspacing' })}>
                                                         Web Spacing Details
                                                     </Button>
                                                 </div>
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Capacity</div>
-                                                    <Button style={styles.outputButton}>
+                                                    <Button style={styles.outputButton} disabled={!output} onClick={() => setDetail({ title: 'Web Capacity', section: 'webcapacity' })}>
                                                         Web Capacity
                                                     </Button>
                                                 </div>
@@ -1618,7 +1555,7 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Width (mm)</div>
                                                     <Input
-                                                        value={output?.["FlangePlate.Width"]?.value || ""}
+                                                        value={outputValue("Flange_Plate.Width (mm)")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
@@ -1626,7 +1563,7 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Length (mm)</div>
                                                     <Input
-                                                        value={output?.["FlangePlate.Length"]?.value || ""}
+                                                        value={outputValue("flange_plate.Length")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
@@ -1634,20 +1571,20 @@ const ColumnCoverPlateBolted = () => {
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Thickness (mm) *</div>
                                                     <Input
-                                                        value={output?.["FlangePlate.Thickness"]?.value || ""}
+                                                        value={outputValue("Connector.Flange_Plate.Thickness_list")}
                                                         readOnly
                                                         style={styles.outputValue}
                                                     />
                                                 </div>
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Spacing (mm)</div>
-                                                    <Button style={styles.outputButton}>
+                                                    <Button style={styles.outputButton} disabled={!output} onClick={() => setDetail({ title: 'Flange Spacing Details', section: 'flangespacing' })}>
                                                         Flange Spacing Details
                                                     </Button>
                                                 </div>
                                                 <div style={styles.outputField}>
                                                     <div style={styles.outputLabel}>Capacity</div>
-                                                    <Button style={styles.outputButton}>
+                                                    <Button style={styles.outputButton} disabled={!output} onClick={() => setDetail({ title: 'Flange Capacity', section: 'flangecapacity' })}>
                                                         Flange Capacity
                                                     </Button>
                                                 </div>
@@ -2277,6 +2214,27 @@ const ColumnCoverPlateBolted = () => {
                         </div>
                     </div>
                 </Modal>
+            <Modal
+                title={detail ? detail.title : ''}
+                open={Boolean(detail)}
+                onCancel={() => setDetail(null)}
+                footer={null}
+            >
+                {detailRows.length === 0 ? (
+                    <p>No values were reported for this section.</p>
+                ) : (
+                    <Table
+                        size="small"
+                        pagination={false}
+                        rowKey="key"
+                        dataSource={detailRows}
+                        columns={[
+                            { title: 'Parameter', dataIndex: 'label' },
+                            { title: 'Value', dataIndex: 'value', align: 'right', render: (v) => String(v) },
+                        ]}
+                    />
+                )}
+            </Modal>
         </Layout>
         </ConfigProvider>
     );

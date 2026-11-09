@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import Variable from '../Variable';
 import { Table, Modal, Button, Layout, Tabs, Select, Radio, Input, Space, Divider, Dropdown, notification } from 'antd';
 import ColumnSectionModal from './ColumnSectionModal';
 import WeldSectionModal from './WeldSectionModal';
 import DetailingSectionModal from './DetailingSectionModal';
 import DesignSectionModal from './DesignSectionModal';
-import OutputDock from './OutputDock';
 import ConnectorSectionModal from "./ConnectorSectionModal";
 import CustomSectionModal from "./CustomSectionModal";
-import ThreeRender from './shearConnection/threerender';
+import ColumnCoverPlateViewer from './ColumnCoverPlateViewer';
 import { UserContext } from '../context/UserState';
 
 const { Content } = Layout;
@@ -34,6 +32,7 @@ const ColumnCoverPlateWelded = () => {
     const [resetFlag, setResetFlag] = useState(false);
     const [output, setOutput] = useState(null);
     const [logs, setLogs] = useState([]);
+    const [cadAvailable, setCadAvailable] = useState(false);
     const [formData, setFormData] = useState({
         "Connectivity": "Column-Column",
         "Connector.Material": "E 250 (Fe 410 W)A",
@@ -76,9 +75,8 @@ const ColumnCoverPlateWelded = () => {
     // Create session function
     const createSession = async () => {
         try {
-            const response = await axios.get(`${baseUrl}/sessions/create`);
-            const sessionId = response.data;
-            Cookies.set('column_cover_plate_welded_session', sessionId);
+            // The backend sets the column_cover_plate_welded_session cookie.
+            await axios.post(`${baseUrl}/sessions/create`, { module_id: 'Column Cover Plate Welded' }, { withCredentials: true });
         } catch (error) {
             console.error('Error creating session:', error);
         }
@@ -86,10 +84,11 @@ const ColumnCoverPlateWelded = () => {
 
     // Handle form input changes
     const handleInputChange = (name, value) => {
-        setFormData({
-            ...formData,
+        // Functional update: several fields are often changed in a row.
+        setFormData((prev) => ({
+            ...prev,
             [name]: value,
-        });
+        }));
     };
 
     // Save input data function
@@ -124,11 +123,6 @@ const ColumnCoverPlateWelded = () => {
         setLogs([]);
 
         try {
-            const sessionId = Cookies.get('column_cover_plate_welded_session');
-            if (!sessionId) {
-                throw new Error('No session ID found');
-            }
-
             // Send data for calculation
             const response = await axios.post(`${baseUrl}/calculate-output/Column-Cover-Plate-Welded`, formData, {
                 headers: {
@@ -137,50 +131,40 @@ const ColumnCoverPlateWelded = () => {
                 withCredentials: true,
             });
 
-            // Always display logs if they exist
-            if (response.data.logs && response.data.logs.length > 0) {
-                setLogs(response.data.logs);
+            const { data = {}, logs: responseLogs = [], success, cad_available: cadOnServer } = response.data;
+            setLogs(responseLogs);
+            setCadAvailable(Boolean(cadOnServer));
+            if (data && Object.keys(data).length > 0) {
+                setOutput(data);
             }
 
-            if (response.data.success) {
-                // Set output data if it exists
-                if (response.data.data && Object.keys(response.data.data).length > 0) {
-                    setOutput(response.data.data);
-                    notification.success({
-                        message: 'Success',
-                        description: 'Output generated successfully',
-                    });
-                } else {
-                    // Handle case where data is empty but success is true (limited functionality mode)
-                    notification.info({
-                        message: 'Limited Functionality',
-                        description: 'The application is running in limited functionality mode',
-                    });
-                }
+            if (success) {
+                notification.success({
+                    message: 'Design complete',
+                    description: 'The connection is safe for the given inputs.',
+                });
             } else {
                 notification.warning({
-                    message: 'Warning',
-                    description: 'Could not generate output. Check the logs for details.',
+                    message: 'Design is not safe',
+                    description: 'See the log below for the checks that failed.',
                 });
             }
         } catch (error) {
             console.error('Error generating output:', error);
+            const serverLogs = error.response && error.response.data && error.response.data.logs;
             let errorMessage = 'An error occurred while generating output';
-            
-            // Try to extract more specific error message if available
-            if (error.response && error.response.data) {
-                errorMessage = error.response.data.message || errorMessage;
+            if (serverLogs && serverLogs.length > 0) {
+                errorMessage = serverLogs[0].msg;
+            } else if (!error.response) {
+                errorMessage = 'Could not reach the Osdag server. Is the backend running?';
             }
-            
+
             notification.error({
-                message: 'Error',
+                message: 'Design failed',
                 description: errorMessage,
             });
-            
-            // Add error to logs for display
-            setLogs([
-                { type: 'ERROR', msg: errorMessage }
-            ]);
+
+            setLogs(serverLogs && serverLogs.length > 0 ? serverLogs : [{ type: 'ERROR', msg: errorMessage }]);
         } finally {
             setLoading(false);
         }
@@ -214,27 +198,14 @@ const ColumnCoverPlateWelded = () => {
         setResetFlag(!resetFlag);
     };
 
-    // Generate CAD model
-    const generateCAD = async (section) => {
-        try {
-            const sessionId = Cookies.get('column_cover_plate_welded_session');
-            await axios.post(`${baseUrl}/design/cad`, {
-                input_values: formData,
-                section: section,
-                session: sessionId
-            });
-            
-            notification.success({
-                message: 'Success',
-                description: `CAD model for ${section} generated successfully`,
-            });
-        } catch (error) {
-            console.error('Error generating CAD model:', error);
-            notification.error({
-                message: 'Error',
-                description: 'Failed to generate CAD model',
-            });
-        }
+    // 3D CAD is not wired up for this module on the web yet (see ColumnCoverPlateViewer).
+    const generateCAD = () => {
+        notification.info({
+            message: '3D model not available',
+            description: cadAvailable
+                ? '3D rendering for this module is not connected to the web viewer yet.'
+                : '3D rendering needs pythonOCC and FreeCAD on the server.',
+        });
     };
 
     // Generate report
@@ -443,7 +414,16 @@ const ColumnCoverPlateWelded = () => {
                                 </div>
                                 <div className='output-container'>
                                     {output ? (
-                                        <OutputDock output={output} />
+                                        <Table
+                                            size='small'
+                                            pagination={false}
+                                            rowKey='key'
+                                            dataSource={Object.values(output)}
+                                            columns={[
+                                                { title: 'Parameter', dataIndex: 'label' },
+                                                { title: 'Value', dataIndex: 'value', align: 'right', render: (v) => String(v) },
+                                            ]}
+                                        />
                                     ) : (
                                         <div className="no-output-message">
                                             <p>Click the Design button to generate output</p>
@@ -468,7 +448,7 @@ const ColumnCoverPlateWelded = () => {
                             </TabPane>
                             <TabPane tab='3D View' key='3'>
                                 <div className='viewer-container'>
-                                    <ThreeRender resetFlag={resetFlag} />
+                                    <ColumnCoverPlateViewer hasOutput={Boolean(output)} cadAvailable={cadAvailable} />
                                 </div>
                             </TabPane>
                         </Tabs>
