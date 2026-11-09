@@ -22,24 +22,32 @@ Osdag is free/libre, open-source software for designing and detailing steel stru
 
 ## What I added
 
-All my commits (April 2025) cover the **Column Cover Plate** moment-connection module:
+My commits (April 2025) add the **Column Cover Plate** moment-connection module. Later clean-up commits (November 2026) made it run the real design and fixed security issues; they are listed under [Current status](#current-status).
 
 **Backend**
-- `osdag_api/modules/column_cover_plate_bolted.py` and `column_cover_plate_welded.py`: API modules that define the required input keys, validate input, build the design object, format output values and export a `.brep` CAD model
-- `osdag/web_api/columncoverplate_outputView.py` and `columncoverplate_welded_outputView.py`: new endpoints `POST /calculate-output/Column-Cover-Plate-Bolted` and `.../Column-Cover-Plate-Welded`
-- Registered the modules in `osdag_api/module_finder.py` / `common_defs.py`
-- Graceful fallback when pythonOCC (`OCC`) is not installed: dummy modules and CAD stubs plus warning logs, so the interface still loads
-- Small fixes to `populate_database.py`, `update_sequences.py` and the shared shear-connection helpers
+- `osdag_api/modules/column_cover_plate_bolted.py` and `column_cover_plate_welded.py`: API modules that validate input, run the upstream Osdag design classes (`ColumnCoverPlate` / `ColumnCoverPlateWeld`) and format their outputs and design log. Shared logic is in `column_cover_plate_common.py`.
+- `osdag/web_api/columncoverplate_outputView.py` (and the welded subclass): `POST /calculate-output/Column-Cover-Plate-Bolted` and `.../Column-Cover-Plate-Welded`
+- Session cookies for both modules in `osdag/web_api/session_api.py`, plus registration in `osdag_api/module_finder.py` / `common_defs.py`
+- `osdag_api/tests/test_column_cover_plate.py`: unit tests that run the upstream example inputs
 
 **Frontend (`osdagclient/`)**
-- `ColumnCoverPlateBolted.jsx` / `ColumnCoverPlateWelded.jsx`: input dock and page for the new module, at routes `/design/:designType/column_cover_plate_bolted` and `/column_cover_plate_welded`
+- `ColumnCoverPlateBolted.jsx` / `ColumnCoverPlateWelded.jsx`: pages for the new module, at routes `/design/:designType/column_cover_plate_bolted` and `/column_cover_plate_welded`
 - Reworked section modals for the design preferences (column, connector, bolt, weld, detailing, design), plus the `DesignPreferences` dialog
-- Design messages now appear only in the 3D viewer (`threerender.jsx`) instead of overlapping the preferences dialog
-- `ErrorBoundary.jsx` and additional styles in `App.css`
+- Capacity and spacing buttons in the bolted output dock open a table of the matching design values
+- `ColumnCoverPlateViewer.jsx` (3D panel status), `ErrorBoundary.jsx` and extra styles in `App.css`
+
+### Screenshots
+
+| Bolted design output | Flange bolt capacity details |
+| --- | --- |
+| ![Column cover plate bolted output](docs/screenshots/column-cover-plate-bolted.png) | ![Flange bolt capacity table](docs/screenshots/column-cover-plate-bolted-capacity.png) |
 
 ### Current status
 
-The UI flow, API wiring and module registration for the Column Cover Plate module work end to end. To run without pythonOCC, `design_type/connection/column_cover_plate.py` and `cad/common_logic.py` were replaced in this copy with simplified versions. As a result, **the output values for this module are placeholders** and do not come from a real IS 800 design calculation, and 3D model generation is limited. Restoring the upstream design logic is the next step.
+- **Outputs are real.** The module runs the upstream IS 800:2007 design code (`design_type/connection/column_cover_plate.py` and `column_cover_plate_weld.py`), so plate sizes, bolt and weld details, capacities and the design log are calculated. Unsafe designs are flagged with the design log's errors. The design does not need pythonOCC.
+- An earlier commit of mine had replaced `column_cover_plate.py`, `cad/common_logic.py`, `cad/items/notch.py`, `shear_connection_common.py` and the shared `threerender.jsx` with simplified stubs that returned placeholder values. Those files are now restored verbatim from upstream.
+- **3D view:** not available for this module in the web app. CAD needs pythonOCC and FreeCAD on the server, and the upstream CAD endpoint (`/design/cad`) only handles the shear-connection sessions. The 3D panel says so instead of showing a model.
+- The welded page is still a basic layout. It runs the design and lists the outputs as a table.
 
 ## Tech stack
 
@@ -89,31 +97,47 @@ CREATE ROLE <db_user> PASSWORD '<db_password>' SUPERUSER CREATEDB CREATEROLE INH
 CREATE DATABASE "postgres_Intg_osdag" WITH OWNER <db_user>;
 ```
 
-Database settings live in `osdag_web/postgres_credentials.py`, and the Django key in `osdag_web/secret_key.py`:
+### 2. Configuration
 
-| Setting | Where | Example |
-|---------|-------|---------|
-| DB user | `get_username()` | `<db_user>` |
-| DB password | `get_password()` | `<db_password>` |
-| DB host | `get_host()` | `localhost` |
-| DB port | `get_port()` | `5432` |
-| DB name | `get_database_name()` | `postgres_Intg_osdag` |
-| Django secret key | `secret_key.py → get_secret_key()` | `<your-django-secret-key>` |
+All secrets and environment-specific settings come from environment variables. For local development, copy `.env.example` to `.env` (git-ignored) and fill it in. Real environment variables take precedence.
 
-### 2. Backend
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `DJANGO_SECRET_KEY` | yes (unless `DJANGO_DEBUG=True`) | none | Django secret key, also used to sign JWTs. With debug on and no key set, a temporary random key is used. |
+| `DJANGO_DEBUG` | no | `False` | Django debug mode |
+| `DJANGO_ALLOWED_HOSTS` | no | `127.0.0.1,localhost` | Comma-separated host names |
+| `CORS_ALLOWED_ORIGINS` | no | `http://localhost:5173,http://127.0.0.1:5173` | Frontend origins allowed to call the API with cookies |
+| `DB_PASSWORD` | yes | none | PostgreSQL password |
+| `DB_USER` | no | `postgres` | PostgreSQL user |
+| `DB_NAME` | no | `postgres_Intg_osdag` | Database name |
+| `DB_HOST` | no | `localhost` | Database host |
+| `DB_PORT` | no | `5432` | Database port |
+| `DB_ENGINE` | no | `postgresql` | Set to `sqlite` only for quick local checks (`manage.py check`); the section tables are not loaded then |
+
+`osdag_web/postgres_credentials.py` and `osdag_web/secret_key.py` read these variables. They no longer contain any credentials.
+
+### 3. Backend
 
 ```bash
 git clone https://github.com/VamsiKrishnaThota03/osdag.git
 cd osdag
+cp .env.example .env                 # then edit it
 conda activate                       # environment from the Osdag installer
 pip install -r requirements.txt
 python populate_database.py
 python update_sequences.py
+python manage.py makemigrations osdag   # osdag/migrations is git-ignored upstream
 python manage.py migrate
 python manage.py runserver 8000
 ```
 
-### 3. Frontend
+Run the Column Cover Plate tests (no database or pythonOCC needed; `numpy`, `pandas`, `pylatex` and `PyYAML` must be installed):
+
+```bash
+python -m unittest discover -s osdag_api/tests -t .
+```
+
+### 4. Frontend
 
 ```bash
 cd osdagclient
@@ -123,16 +147,24 @@ npm run dev                          # http://localhost:5173
 
 ### Docker (upstream setup)
 
-`docker-compose.yml` defines `backend`, `frontend` and `db` (Postgres 14) services. It expects the database host to be `db` and uses its own credentials, so update `osdag_web/postgres_credentials.py` to match before running `docker compose up`.
+`docker-compose.yml` defines `backend`, `frontend` and `db` (Postgres 14) services. Both the backend and Postgres read `DB_USER`, `DB_PASSWORD` and `DB_NAME` from `.env`, and the backend uses `DB_HOST=db`. Create `.env` first, then run `docker compose up`. Postgres is published on `127.0.0.1:5432` only.
 
 ## API endpoints for this module
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/calculate-output/Column-Cover-Plate-Bolted` | Validate inputs and return output values, logs and CAD model for the bolted cover plate |
+| `POST` | `/sessions/create` | Body `{"module_id": "Column Cover Plate Bolted"}` (or `... Welded`). Creates a design session and sets its cookie |
+| `POST` | `/calculate-output/Column-Cover-Plate-Bolted` | Runs the bolted design. Returns `{data, logs, success, cad_available}`: `200` with results (`success` is `false` for unsafe designs), `400` for invalid input or no session, `422` if the design code cannot handle the inputs (for example, an unknown section) |
 | `POST` | `/calculate-output/Column-Cover-Plate-Welded` | Same for the welded variant |
 
 The other endpoints (sessions, design preferences, design report, user accounts, the shear-connection modules) come from upstream. See `osdag/urls.py`.
+
+## Known limitations
+
+- No 3D model or BREP export for the Column Cover Plate modules in the web app (see [Current status](#current-status)). `create_cad_model` follows the upstream desktop CAD path when pythonOCC is installed, but it has not been tested.
+- The shear-connection modules (Fin Plate, End Plate, Cleat Angle, Seated Angle) still need pythonOCC on the server, as upstream. Without it, their endpoints return a clear "not available" error.
+- The upstream design classes keep their state on the class. Each request uses a separate subclass, and runs are serialised with a lock.
+- Not deployed anywhere from this repo. The Docker setup is the upstream one and has not been rebuilt.
 
 ## License
 
