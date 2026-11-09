@@ -11,8 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from osdag_web.env import env, env_bool, env_list
 from osdag_web.secret_key import get_secret_key
-from osdag_web.postgres_credentials import get_database_name, get_host, get_password, get_port, get_username
 import os
 from datetime import timedelta
 
@@ -24,21 +24,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_secret_key()
-DATABASE_NAME = get_database_name()
-USER = get_username()
-PASSWORD = get_password()
-PORT = get_port()
-HOST = get_host()
+SECRET_KEY = get_secret_key()  # from DJANGO_SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DJANGO_DEBUG', False)
 
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
-CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:5173',
-                        'http://localhost:5173']  # 5173 -> port for Vite App
+# Origins allowed to call the API with cookies (5173 -> port for the Vite app).
+CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS', ['http://127.0.0.1:5173', 'http://localhost:5173'])
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 CORS_ALLOW_METHODS = ['POST', 'GET', 'OPTIONS']
 
@@ -55,7 +51,6 @@ CORS_ALLOW_HEADERS = ["accept",
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:5173', 'http://localhost:5173']
 
 
 # Application definition
@@ -79,19 +74,17 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist'
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
-ALLOWED_HOSTS = ['*']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # CorsMiddleware must run before CommonMiddleware.
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'osdag_web.urls'
@@ -104,7 +97,8 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": False,
 
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": "",  # settings.SIGNING_KEY
+    # An empty signing key would let anyone forge tokens; sign with SECRET_KEY.
+    "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": "",
     "AUDIENCE": None,
     "ISSUER": None,
@@ -159,16 +153,28 @@ WSGI_APPLICATION = 'osdag_web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': DATABASE_NAME,
-        'USER': USER,
-        'PASSWORD': PASSWORD,
-        'HOST': HOST,
-        'PORT': PORT,
+if env('DB_ENGINE', 'postgresql') == 'sqlite':
+    # Local checks only (e.g. `manage.py check` / migrations without PostgreSQL).
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': env('DB_NAME', str(BASE_DIR / 'db.sqlite3')),
+        }
     }
-}
+else:
+    from osdag_web.postgres_credentials import (
+        get_database_name, get_host, get_password, get_port, get_username)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': get_database_name(),
+            'USER': get_username(),
+            'PASSWORD': get_password(),
+            'HOST': get_host(),
+            'PORT': get_port(),
+        }
+    }
+
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
