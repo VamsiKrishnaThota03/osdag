@@ -119,7 +119,7 @@ All secrets and environment-specific settings come from environment variables. F
 ### 3. Backend
 
 ```bash
-git clone https://github.com/VamsiKrishnaThota03/osdag.git
+git clone https://github.com/VamsiKrishnaThota03/osdag-column-cover-plate.git
 cd osdag
 cp .env.example .env                 # then edit it
 conda activate                       # environment from the Osdag installer
